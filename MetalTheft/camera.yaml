@@ -1,0 +1,102 @@
+
+# RTSP_URL = "rtsp://ProjectTheft2024:Theft@2024@103.106.195.202:554/cam/realmonitor?channel=1&subtype=0"
+# RTSP_URL1 = "rtsp://ProjectTheft2024:Theft@2024@103.194.88.114/cam/realmonitor?channel=1&subtype=0"
+# RTSP_URL2 = "rtsp://ProjectTheft2024:Theft@2024@115.244.177.86/cam/realmonitor?channel=1&subtype=0"
+
+
+cameras:
+  camera_1:
+    RTSP_URL: rtsp://ProjectTheft2024:Theft@2024@103.106.195.202:554/cam/realmonitor?channel=1&subtype=0
+    roi_1_pts_np:
+      - [885, 120]
+      - [917, 120]
+      - [891, 888]
+      - [800, 889]
+    roi_2_pts_np:
+      - [854, 189]
+      - [627, 896]
+      - [6, 886]
+      - [415, 204]
+    roi_3_pts_np:
+      - [932, 167]
+      - [932, 890]
+      - [1267, 889]
+      - [1270, 208]
+    thresh_roi: 80
+
+
+
+  camera_2:
+    RTSP_URL: rtsp://ProjectTheft2024:Theft@2024@103.194.88.114/cam/realmonitor?channel=1&subtype=0
+    roi_1_pts_np:
+      - [607, 172]
+      - [657, 176]
+      - [1080, 707]
+      - [744, 711]
+    roi_2_pts_np:
+      - [695, 711]
+      - [601, 179]
+      - [47, 249]
+      - [4, 707]
+    roi_3_pts_np:
+      - [1107, 709]
+      - [674, 152]
+      - [1170, 192]
+      - [1279, 612]
+    thresh_roi: 100
+
+
+
+
+
+
+  camera_3:
+    RTSP_URL: rtsp://ProjectTheft2024:Theft@2024@115.244.177.86/cam/realmonitor?channel=1&subtype=0
+    roi_1_pts_np:
+      - [3, 392]
+      - [866, 220]
+      - [873, 180]
+      - [5, 320]
+    roi_2_pts_np:
+      - [8, 550]
+      - [850, 249]
+      - [960, 283]
+      - [684, 716]
+    roi_3_pts_np:
+      - [12, 294]
+      - [858, 181]
+      - [534, 7]
+      - [11, 21]
+    thresh_roi: 100
+
+
+  camera_4:
+    RTSP_URL: rtsp://ProjectTheft2024:Theft@2024@115.244.177.86/cam/realmonitor?channel=1&subtype=0
+    roi_1_pts_np:
+      - [3, 392]
+      - [866, 220]
+      - [873, 180]
+      - [5, 320]
+    roi_2_pts_np:
+      - [8, 550]
+      - [850, 249]
+      - [960, 283]
+      - [684, 716]
+    roi_3_pts_np:
+      - [12, 294]
+      - [858, 181]
+      - [534, 7]
+      - [11, 21]
+    thresh_roi: 100
+
+
+cameras:
+  camera_2:
+    RTSP_URL: "your_rtsp_url"
+    roi_1_pts_np: [[x1, y1], [x2, y2], ...]
+    roi_2_pts_np: [[x1, y1], [x2, y2], ...]
+    roi_3_pts_np: [[x1, y1], [x2, y2], ...]
+    thresh_roi: 25
+    motion_buffer_duration: 5
+    motion_buffer_fps: 30
+    motion_direction_window: 2.0
