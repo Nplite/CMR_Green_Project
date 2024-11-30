@@ -147,6 +147,8 @@ class CameraProcessor:
             self.snapshot_url = None
             self.is_processing = False
             self.object_counter = 0
+            self.frame_count  = 0
+            self.frame_count += 1
             
             # Initialize components with error handling
             self.initialize_components()
@@ -211,18 +213,18 @@ class CameraProcessor:
             combined_frame1 = frame.copy()
             combined_frame2 = frame.copy()
 
-            self.motion_frame_buffer.append(frame.copy())
+            
             blurred_frame = cv2.GaussianBlur(frame, (21, 21), 0)
 
             # Process ROI 1
-            combined_frame1, thresh_ROI1, person_detected, detections = detect_motion(frame, blurred_frame, model, self.fgbg, self.roi_1_pts_np)
+            combined_frame1, thresh_ROI1, _, detections = detect_motion(frame, blurred_frame, model, self.fgbg, self.roi_1_pts_np)
             motion_in_roi1 = cv2.countNonZero(thresh_ROI1) > self.thresh_value
             motion_mask_1 = np.zeros_like(combined_frame1)
             cv2.fillPoly(motion_mask_1, [self.roi_1_pts_np], (0, 255, 0))
             combined_frame1 = cv2.addWeighted(combined_frame1, 0.6, motion_mask_1, 0.4, 0)
             
             # Process ROI 2
-            combined_frame2, thresh_ROI2, _, _ = detect_motion(frame, blurred_frame, model, self.fgbg, self.roi_2_pts_np)
+            combined_frame2, thresh_ROI2, person_detected, _ = detect_motion(frame, blurred_frame, model, self.fgbg, self.roi_2_pts_np)
             motion_in_roi2 = cv2.countNonZero(thresh_ROI2) > self.thresh_value
             motion_mask_2 = np.zeros_like(frame)
             cv2.fillPoly(motion_mask_2, [self.roi_2_pts_np], (0,0,0))  
@@ -233,13 +235,17 @@ class CameraProcessor:
             cv2.polylines(combined_frame3, [self.roi_3_pts_np], isClosed=True, color=(0, 255, 0), thickness=1)
             self.current_people_in_roi3 = len(person_in_roi3)
             
+            if self.frame_count > 20:
+                _, _, person_detected, _ = detect_motion(frame, blurred_frame, model, self.fgbg, self.roi_2_pts_np)
 
             combined_frame = self.process_motion(frame,
                 combined_frame1, combined_frame2, combined_frame3, motion_in_roi1, person_counter,
                 motion_in_roi2, person_detected, person_in_roi3, thresh_ROI1, thresh_ROI2, detections)
             
+            self.frame_count += 1
+            
             return combined_frame, thresh_ROI1
-        
+            
         except Exception as e:
             print(f"Error processing camera {self.camera_id}: {str(e)}")
             return frame, None
@@ -261,6 +267,7 @@ class CameraProcessor:
 
         # combined_frame = cv2.add(combined_frame1, combined_frame2)
         combined_frame = cv2.add(cv2.add(combined_frame1, combined_frame2), combined_frame3)
+        self.motion_frame_buffer.append(combined_frame.copy())
 
         # Handle recording logic
         self.current_time = datetime.now()
@@ -312,7 +319,19 @@ class CameraProcessor:
                 threading.Thread(target=self.mongo_handler.save_snapshot_to_mongodb, args=(self.snapshot_url, start_time, self.camera_id)).start()
                 threading.Thread(target=self.mongo_handler.save_video_to_mongodb, args=(self.video_url, start_time, self.camera_id)).start()
                 threading.Thread(target=self.email.send_alert_email, args=(self.snapshot_path, self.video_url, self.camera_id)).start()
+               
+                # def upload_and_process(video_path, snapshot_path, camera_id, start_time ):
+                #     video_url = self.aws.upload_video_to_s3bucket(video_path, camera_id)
+                #     snapshot_url = self.aws.upload_snapshot_to_s3bucket(snapshot_path, camera_id)
+                #     self.mongo_handler.save_snapshot_to_mongodb(snapshot_url, start_time, camera_id)
+                #     self.mongo_handler.save_video_to_mongodb(video_url, start_time, camera_id)
+                #     self.email.send_alert_email(snapshot_path, video_url, camera_id)
+
+                # threading.Thread(target=upload_and_process, args=(self.video_path, self.snapshot_path,self.camera_id, start_time)).start()
+
+
                 self.counter += 1
+                
         
         # Draw detection boxes
         cv2.putText(combined_frame, f'Object Count: {self.object_counter}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
@@ -329,7 +348,7 @@ class MultiCameraSystem:
         except Exception as e:
             logging.error(f"Failed to load YOLO model: {str(e)}")
             raise
-            
+        
         self.is_running = False
         self.processing_thread = None
         
@@ -538,7 +557,6 @@ mongo_handler = MongoDBHandler()
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the FastAPI Metal Theft Detection System"}
-
 
 @app.get("/cameras/count")
 async def get_camera_count():

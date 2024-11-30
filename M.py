@@ -67,8 +67,9 @@ app.add_middleware(
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*","Authorization", "Content-Type"],
-)
+    allow_headers=["*","Authorization", "Content-Type"],)
+
+
 
 class CameraURL(BaseModel):
     camera_id: int
@@ -364,12 +365,18 @@ class CameraProcessor:
                 # threading.Thread(target=self.email.send_alert_email, args=(self.snapshot_path, self.video_url, self.camera_id)).start()
 
 
-                threading.Thread(target= verify_motion_in_video, args = (self.video_path, self.roi_1_pts_np, self.roi_2_pts_np, self.snapshot_path, self.camera_id)).start()
-          
-
-        
 
 
+                def upload_and_process(video_path, snapshot_path, camera_id, start_time ):
+                    video_url = self.aws.upload_video_to_s3bucket(video_path, camera_id)
+                    snapshot_url = self.aws.upload_snapshot_to_s3bucket(snapshot_path, camera_id)
+                    self.mongo_handler.save_snapshot_to_mongodb(snapshot_url, start_time, camera_id)
+                    self.mongo_handler.save_video_to_mongodb(video_url, start_time, camera_id)
+                    self.email.send_alert_email(snapshot_path, video_url, camera_id)
+
+                threading.Thread(target=upload_and_process, args=(self.video_path, self.snapshot_path,self.camera_id, start_time)).start()
+
+                # threading.Thread(target= verify_motion_in_video, args = (self.video_path, self.roi_1_pts_np, self.roi_2_pts_np, self.snapshot_path, self.camera_id)).start()
                 # result_queue = queue.Queue()
                 # result  = threading.Thread(target= verify_motion_in_video, args = (self.video_path, self.roi_1_pts_np, self.roi_2_pts_np, self.snapshot_path, self.camera_id,  result_queue)).start()
                 # result = result_queue.get()
