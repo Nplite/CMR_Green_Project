@@ -29,9 +29,9 @@ mongo_handler = MongoDBHandler()
 aws = AWSConfig()
 # model = YOLO('/home/alluvium/Desktop/Namdeo/CMR_Project/yolov8n.engine',task ='detect', verbose=True)  
 model = YOLO('yolov8n.pt',verbose=True)  
-RTSP = 'DATA/18-10-2024.mp4'
+RTSP = 'rtsp://admin:Control@12@201.202.202.20/cam/realmonitor?channel=1&subtype=0'
 cap = cv2.VideoCapture(RTSP)
-Manual_Thresh = 100
+Manual_Thresh = 300
 object_counter = 0
 
 # Get the actual FPS from the camera

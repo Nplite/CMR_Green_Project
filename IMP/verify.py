@@ -7,194 +7,362 @@ import numpy as np
 from datetime import datetime
 from MetalTheft.motion_detection import detect_motion
 from ultralytics import YOLO
-from MetalTheft.utils.utils import save_snapshot
+from MetalTheft.utils.utils import save_snapshot, draw_motion_contours, save_video
 from MetalTheft.vid_stabilisation import VideoStabilizer
 from MetalTheft.send_email import EmailSender
 from MetalTheft.roi_selector import ROISelector
 from MetalTheft.mongodb import MongoDBHandler
 from MetalTheft.aws import AWSConfig
-from Video_classification.testing import VideoActionTester
-
+from collections import deque
+from vidgear.gears import CamGear
+import os
+motion_detected_flag = False
+motion_buffer_duration = 5  # Duration before and after motion
+moton_buffer_fps = 30  
+motion_frame_buffer = deque(maxlen=moton_buffer_fps * motion_buffer_duration)  
+recording_after_motion = False
+recording_end_time = None
 logging.getLogger('ultralytics').setLevel(logging.WARNING) 
-
+motion_frame_buffer = deque(maxlen=moton_buffer_fps * motion_buffer_duration)  
 # Initialize objects
 model = YOLO('yolov8n.pt', verbose=True)
 email = EmailSender()
 roi_selector = ROISelector()
 mongo_handler = MongoDBHandler()
+out_motion =  None
 stabiliser = VideoStabilizer()
 aws = AWSConfig()
 fourcc = cv2.VideoWriter_fourcc(*'mp4v')
 alpha = 0.8
+last_motion_time = None
 
-
-# Initialize the action recognition model
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-# model_path = '/home/alluvium/Desktop/Namdeo/CMR_Project/Video_classification/action_recognition_model.pth'
-model_path = 'action_recognition_model.pth'
-label_map = {'CricketBowling': 0, 'JavelineThrow': 1, 'ThrowDiscus': 2}  # Replace with your label map
-action_tester = VideoActionTester(model_path=model_path, device=device, label_map=label_map, frames_per_clip=32)
-
-
-def verify_motion_in_video(video_path, roi_1_pts_np, roi_2_pts_np, snapshot_path, motion_threshold=350):
-    cap_verify = cv2.VideoCapture(video_path)
-    fgbg = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=20, detectShadows=True)
+# def verify_motion_in_video(video_path, roi_1_pts_np, roi_2_pts_np, snapshot_path, camera_id, result_queue):
+#     global last_motion_time
     
-    if not cap_verify.isOpened():
-        print(f"Error: Could not open video for verification: {video_path}")
-        return "No"
-    
-    person_detected = False
-    action_detected = False
-    action_checked = False  # To ensure action recognition is only called once
-    frame_count = 0  # To keep track of the number of frames
-
-    while cap_verify.isOpened():
-        ret, frame = cap_verify.read()
-        if not ret:
-            break
-
-        blurred_frame = cv2.GaussianBlur(frame, (21, 21), 0)  # Blur for noise reduction
-        frame_count += 1  # Increment frame count
-
-        # Motion detection in ROI 1
-        _, thresh_ROI1, _, _ = detect_motion(frame, blurred_frame, model, fgbg, roi_1_pts_np)
-        motion_in_roi1 = cv2.countNonZero(thresh_ROI1) > motion_threshold
-        
-        # Motion detection in ROI 2
-        _, thresh_ROI2, _, _ = detect_motion(frame, blurred_frame, model, fgbg, roi_2_pts_np)
-        motion_in_roi2 = cv2.countNonZero(thresh_ROI2) > motion_threshold
-
-        # Person detection after 20 frames
-        if frame_count > 20:
-            _, _, person_detected, _ = detect_motion(frame, blurred_frame, model, fgbg, roi_1_pts_np)
-
-        # Trigger action recognition only once when motion and person detection are satisfied
-        if motion_in_roi1 and person_detected and not action_checked:
-            action_result = action_tester.predict(video_path, threshold=0.5)
-            action_checked = True  # Mark action recognition as checked
-
-            if action_result == 'Yes':
-                if action_result=='Throw': # Check if the recognized action matches
-                    print(f"Action detected: {action_result}")
-                    roi_color = (0, 0, 255)  # Red for positive detection
-                    cv2.fillPoly(frame, [roi_1_pts_np], roi_color)
-
-                    # Save snapshot and video
-                    current_time = datetime.now()
-                # snapshot_url = aws.upload_snapshot_to_s3bucket(snapshot_path)
-                # mongo_handler.save_snapshot_to_mongodb(snapshot_url, current_time)
-                
-                # video_url = aws.upload_video_to_s3bucket(video_path)
-                # mongo_handler.save_video_to_mongodb(video_url, current_time)
-
-                # # Send alert email in a separate thread
-                # threading.Thread(target=email.send_alert_email, args=(snapshot_path, video_url)).start()
-
-                return "Yes"
-
-    cap_verify.release()
-    return "No"
-
-
-
-
-
-
-
-# import cv2
-# import time
-# import logging
-# import threading
-# import torch
-# import numpy as np
-# from datetime import datetime
-# from MetalTheft.motion_detection import detect_motion
-# from ultralytics import YOLO
-# from MetalTheft.utils.utils import save_snapshot
-# from MetalTheft.vid_stabilisation import VideoStabilizer
-# from MetalTheft.send_email import EmailSender
-# from MetalTheft.roi_selector import ROISelector
-# from MetalTheft.mongodb import MongoDBHandler
-# from MetalTheft.aws import AWSConfig
-# from Video_classification.testing import VideoActionTester
-# logging.getLogger('ultralytics').setLevel(logging.WARNING) 
-
-# # Initialize objects
-# model = YOLO('yolov8n.pt', verbose=True)
-# email = EmailSender()
-# roi_selector = ROISelector()
-# mongo_handler = MongoDBHandler()
-# stabiliser = VideoStabilizer()
-# aws = AWSConfig()
-# fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-# alpha = 0.8
-
-
-# # Initialize the action recognition model
-# device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-# model_path = '/home/alluvium/Desktop/Namdeo/CMR_Project/Video_classification/action_recognition_model.pth'
-# label_map = {'CricketBowling': 0, 'JavelineThrow': 1, 'ThrowDiscus': 2}  # Replace with your label map
-# action_tester = VideoActionTester(model_path=model_path, device=device, label_map=label_map, frames_per_clip=32)
-
-# def verify_motion_in_video(video_path, roi_1_pts_np, roi_2_pts_np, snapshot_path, motion_threshold=350):
-    
-#     cap_verify = cv2.VideoCapture(video_path)
+#     video_path = os.path.abspath(video_path)
+#     stream = CamGear(source=video_path, logging=True).start()
 #     fgbg = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=20, detectShadows=True)
-    
-#     if not cap_verify.isOpened():
-#         print(f"Error: Could not open video for verification: {video_path}")
-#         return "No"
-    
-#     person_detected = False
 #     frame_count = 0  # To keep track of the number of frames
-
-#     while cap_verify.isOpened():
-#         ret, frame = cap_verify.read()
-#         if not ret:
+#     frame_count += 1  
+#     motion_direction_window = 1
+#     while True:
+#         frame = stream.read()
+#         if frame is None or frame.size == 0:
 #             break
 
 #         blurred_frame = cv2.GaussianBlur(frame, (21, 21), 0)  # Blur for noise reduction
-#         frame_count += 1  # Increment frame count
 
-#         # Motion in ROI 1
 #         _, thresh_ROI1, _, _ = detect_motion(frame, blurred_frame, model, fgbg, roi_1_pts_np)
-#         motion_in_roi1 = cv2.countNonZero(thresh_ROI1) > motion_threshold
-        
-        
-#         # Motion in ROI 2
-#         _, thresh_ROI2, _, _ = detect_motion(frame, blurred_frame, model, fgbg, roi_2_pts_np)
-#         motion_in_roi2 = cv2.countNonZero(thresh_ROI2) > motion_threshold
-#         # cv2.polylines(frame, [roi_1_pts_np], isClosed=True, color=(0, 255, 0), thickness=1)
+#         motion_in_roi1 = cv2.countNonZero(thresh_ROI1) > 300
+#         if motion_in_roi1:
+#             roi1_motion_time = time.time()
 
-#         # After 20 frames, start person detection
-#         if frame_count > 20:
-#             _, _, person_detected, _ = detect_motion(frame, blurred_frame, model, fgbg, roi_1_pts_np)
+#         _, thresh_ROI2, person_in_roi2, _ = detect_motion(frame, blurred_frame, model, fgbg, roi_2_pts_np)
+#         motion_in_roi2 = cv2.countNonZero(thresh_ROI2) > 300
+#         if motion_in_roi2:
+#             roi2_motion_time = time.time()
 
-#         action_result = action_tester.predict(video_path, threshold=0.5)
-#         action_detected = (action_result == 'CricketBowling')  # Check if the recognized action matches
+#         if frame_count > 15:
+#             _, _, person_in_roi2, _ = detect_motion(frame, blurred_frame, model, fgbg, roi_2_pts_np)
 
-#         # If motion is detected in either ROI and a person is detected after 20 frames
-#         if (motion_in_roi1) and person_detected and action_detected:
-#             motion_in_roi2_to_roi1 = True   
-#             roi_color = (0, 0, 255) if motion_in_roi2_to_roi1 else (0, 255, 0)   
-#             cv2.fillPoly(frame, [roi_1_pts_np], roi_color) 
+#         current_time11 = datetime.now()
+#         if (motion_in_roi1 and person_in_roi2):
+#             if last_motion_time is None or (current_time11 - last_motion_time).total_seconds() > 3:
+#                 if (roi2_motion_time is not None and (roi1_motion_time - roi2_motion_time) <= motion_direction_window):
+#                     last_motion_time = current_time11
+
+#         if (motion_in_roi1 and person_in_roi2 ):
+#             if (roi2_motion_time is not None and (roi1_motion_time - roi2_motion_time) <= motion_direction_window):                  
+#                 start_time = datetime.now()
+#                 video_url = aws.upload_video_to_s3bucket(video_path, camera_id)                  
+#                 snapshot_url = aws.upload_snapshot_to_s3bucket(snapshot_path, camera_id)
+#                 threading.Thread(target=mongo_handler.save_snapshot_to_mongodb, args=(snapshot_url, start_time, camera_id)).start()
+#                 threading.Thread(target=mongo_handler.save_video_to_mongodb, args=(video_url, start_time, camera_id)).start()
+#                 threading.Thread(target=email.send_alert_email, args=(snapshot_path, video_url, camera_id)).start()
+
+#                 result_queue.put("Yes")
+#                 stream.stop()
+#                 return
             
+#         frame_count += 1
 
-#             # snapshot_path = save_snapshot(frame)
-#             # if snapshot_path:
-#             current_time = datetime.now()
-#             snapshot_url = aws.upload_snapshot_to_s3bucket(snapshot_path)
-#             mongo_handler.save_snapshot_to_mongodb(snapshot_url, current_time)
+
+#     result_queue.put("No")
+#     stream.stop()
+
+
+
+
+
+
+
+
+def verify_motion_in_video(video_path, roi_1_pts_np, roi_2_pts_np, snapshot_path, camera_id):
+    global last_motion_time
+    
+    video_path = os.path.abspath(video_path)
+    stream = CamGear(source=video_path, logging=True).start()
+    fgbg = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=20, detectShadows=True)
+    frame_count = 0  # To keep track of the number of frames
+    frame_count += 1  
+    motion_direction_window = 1
+    while True:
+        frame = stream.read()
+        if frame is None or frame.size == 0:
+            break
+
+        blurred_frame = cv2.GaussianBlur(frame, (21, 21), 0)  # Blur for noise reduction
+
+        _, thresh_ROI1, _, _ = detect_motion(frame, blurred_frame, model, fgbg, roi_1_pts_np)
+        motion_in_roi1 = cv2.countNonZero(thresh_ROI1) > 300
+        if motion_in_roi1:
+            roi1_motion_time = time.time()
+
+        _, thresh_ROI2, person_in_roi2, _ = detect_motion(frame, blurred_frame, model, fgbg, roi_2_pts_np)
+        motion_in_roi2 = cv2.countNonZero(thresh_ROI2) > 300
+        if motion_in_roi2:
+            roi2_motion_time = time.time()
+
+        if frame_count > 15:
+            _, _, person_in_roi2, _ = detect_motion(frame, blurred_frame, model, fgbg, roi_2_pts_np)
+
+        current_time11 = datetime.now()
+        if (motion_in_roi1 and person_in_roi2):
+            if last_motion_time is None or (current_time11 - last_motion_time).total_seconds() > 3:
+                if (roi2_motion_time is not None and (roi1_motion_time - roi2_motion_time) <= motion_direction_window):
+                    last_motion_time = current_time11
+
+        if (motion_in_roi1 and person_in_roi2 ):
+            if (roi2_motion_time is not None and (roi1_motion_time - roi2_motion_time) <= motion_direction_window):                  
+                start_time = datetime.now()
+                video_url = aws.upload_video_to_s3bucket(video_path, camera_id)                  
+                snapshot_url = aws.upload_snapshot_to_s3bucket(snapshot_path, camera_id)
+                threading.Thread(target=mongo_handler.save_snapshot_to_mongodb, args=(snapshot_url, start_time, camera_id)).start()
+                threading.Thread(target=mongo_handler.save_video_to_mongodb, args=(video_url, start_time, camera_id)).start()
+                threading.Thread(target=email.send_alert_email, args=(snapshot_path, video_url, camera_id)).start()
+
+                stream.stop()
+                return
             
-#             start_time = current_time
-#             video_url = aws.upload_video_to_s3bucket(video_path)
-#             mongo_handler.save_video_to_mongodb(video_url, start_time)
-#             threading.Thread(target=email.send_alert_email, args=(snapshot_path, video_url)).start()
+        frame_count += 1
+    stream.stop()
 
-#             return "Yes"
 
-#     cap_verify.release()
-#     return "No"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# def verify_motion_in_video(video_path, roi_1_pts_np, roi_2_pts_np, snapshot_path, camera_id, motion_threshold=300):
+#     global last_motion_time
+
+#     # Ensure the video path is valid
+#     video_path = os.path.abspath(video_path)
+#     if not os.path.exists(video_path):
+#         raise FileNotFoundError(f"Error: The video file '{video_path}' does not exist.")
+
+#     # Initialize the video stream
+#     stream = CamGear(source=video_path, logging=True).start()
+#     fgbg = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=20, detectShadows=True)
+
+#     object_counter = 0  # Initialize object counter
+#     frame_count = 0  # Frame counter
+#     last_motion_time = None
+#     roi1_motion_time = None
+#     roi2_motion_time = None
+#     motion_direction_window = 1  # Allowed time difference between ROIs for direction
+
+#     try:
+#         while True:
+#             frame = stream.read()
+#             if frame is None or frame.size == 0:
+#                 break
+
+#             blurred_frame = cv2.GaussianBlur(frame, (21, 21), 0)  # Blur for noise reduction
+#             frame_count += 1
+
+#             # Detect motion in ROI 1
+#             _, thresh_ROI1, _, _ = detect_motion(frame, blurred_frame, model, fgbg, roi_1_pts_np)
+#             motion_in_roi1 = cv2.countNonZero(thresh_ROI1) > motion_threshold
+#             if motion_in_roi1:
+#                 roi1_motion_time = time.time()
+
+#             # Detect motion in ROI 2
+#             _, thresh_ROI2, person_in_roi2, _ = detect_motion(frame, blurred_frame, model, fgbg, roi_2_pts_np)
+#             motion_in_roi2 = cv2.countNonZero(thresh_ROI2) > motion_threshold
+#             if motion_in_roi2:
+#                 roi2_motion_time = time.time()
+
+#             # Check direction and person presence after sufficient frames
+#             if frame_count > 20 and motion_in_roi1 and person_in_roi2:
+#                 if last_motion_time is None or (datetime.now() - last_motion_time).total_seconds() > 3:
+#                     if (roi2_motion_time is not None and (roi1_motion_time - roi2_motion_time) <= motion_direction_window):
+#                         object_counter += 1  # Increment object count
+#                         last_motion_time = datetime.now()
+
+#                         # Handle uploads and alerts
+#                         video_url = aws.upload_video_to_s3bucket(video_path, camera_id)
+#                         snapshot_url = aws.upload_snapshot_to_s3bucket(snapshot_path, camera_id)
+#                         threading.Thread(target=mongo_handler.save_snapshot_to_mongodb, args=(snapshot_url, datetime.now(), camera_id)).start()
+#                         threading.Thread(target=mongo_handler.save_video_to_mongodb, args=(video_url, datetime.now(), camera_id)).start()
+#                         threading.Thread(target=email.send_alert_email, args=(snapshot_path, video_url, camera_id)).start()
+
+#     except Exception as e:
+#         logging.error(f"An error occurred: {e}")
+#     finally:
+#         # Release resources
+#         stream.stop()
+
+#     return object_counter
+
+
+# object_counter = None
+
+# def verify_motion_in_video(video_path, roi_1_pts_np, roi_2_pts_np, snapshot_path, camera_id, motion_threshold=300):
+#     global last_motion_time
+
+#     video_path = os.path.abspath(video_path)
+#     if not os.path.exists(video_path):
+#         raise FileNotFoundError(f"Error: The video file '{video_path}' does not exist.")
+
+#     stream = CamGear(source=video_path, logging=True).start()
+#     fgbg = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=20, detectShadows=True)
+
+#     object_counter = 0  # Initialize object counter
+#     frame_count = 0  # Frame counter
+#     last_motion_time = None
+#     roi1_motion_time = None
+#     roi2_motion_time = None
+#     motion_direction_window = 1  
+
+#     try:
+#         while True:
+#             frame = stream.read()
+#             if frame is None or frame.size == 0:
+#                 break
+
+#             blurred_frame = cv2.GaussianBlur(frame, (21, 21), 0)  # Blur for noise reduction
+#             frame_count += 1
+
+#             # Detect motion in ROI 1
+#             _, thresh_ROI1, _, _ = detect_motion(frame, blurred_frame, model, fgbg, roi_1_pts_np)
+#             motion_in_roi1 = cv2.countNonZero(thresh_ROI1) > motion_threshold
+#             if motion_in_roi1:
+#                 roi1_motion_time = time.time()
+
+#             # Detect motion in ROI 2
+#             _, thresh_ROI2, person_in_roi2, _ = detect_motion(frame, blurred_frame, model, fgbg, roi_2_pts_np)
+#             motion_in_roi2 = cv2.countNonZero(thresh_ROI2) > motion_threshold
+#             if motion_in_roi2:
+#                 roi2_motion_time = time.time()
+
+#             # Check direction and person presence after sufficient frames
+#             if frame_count > 20 and motion_in_roi1 and person_in_roi2:
+#                 if last_motion_time is None or (datetime.now() - last_motion_time).total_seconds() > 3:
+#                     if (roi2_motion_time is not None and (roi1_motion_time - roi2_motion_time) <= motion_direction_window):
+#                         object_counter += 1  # Increment object count
+#                         last_motion_time = datetime.now()
+
+#                         # Handle uploads and alerts
+#                         video_url = aws.upload_video_to_s3bucket(video_path, camera_id)
+#                         snapshot_url = aws.upload_snapshot_to_s3bucket(snapshot_path, camera_id)
+#                         threading.Thread(target=mongo_handler.save_snapshot_to_mongodb, args=(snapshot_url, datetime.now(), camera_id)).start()
+#                         threading.Thread(target=mongo_handler.save_video_to_mongodb, args=(video_url, datetime.now(), camera_id)).start()
+#                         threading.Thread(target=email.send_alert_email, args=(snapshot_path, video_url, camera_id)).start()
+
+#     except Exception as e:
+#         logging.error(f"An error occurred: {e}")
+#     finally:
+#         stream.stop()
+
+#     logging.info(f"Total objects detected: {object_counter}")
+#     return object_counter
+
+
+# def verify_motion_in_video(video_path, roi_1_pts_np, roi_2_pts_np, snapshot_path, camera_id, motion_threshold=300):
+#     global last_motion_time
+
+#     video_path = os.path.abspath(video_path)
+#     if not os.path.exists(video_path):
+#         raise FileNotFoundError(f"Error: The video file '{video_path}' does not exist.")
+
+#     stream = CamGear(source=video_path, logging=True).start()
+#     fgbg = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=20, detectShadows=True)
+
+#     object_counter = 0  # Initialize object counter
+#     frame_count = 0  # Frame counter
+#     last_motion_time = None
+#     roi1_motion_time = None
+#     roi2_motion_time = None
+#     motion_direction_window = 1  
+
+#     try:
+#         while True:
+#             frame = stream.read()
+#             if frame is None or frame.size == 0:
+#                 break
+
+#             blurred_frame = cv2.GaussianBlur(frame, (21, 21), 0)  # Blur for noise reduction
+#             frame_count += 1
+
+#             # Detect motion in ROI 1
+#             _, thresh_ROI1, _, detections = detect_motion(frame, blurred_frame, model, fgbg, roi_1_pts_np)
+#             motion_in_roi1 = cv2.countNonZero(thresh_ROI1) > motion_threshold
+#             if motion_in_roi1:
+#                 roi1_motion_time = time.time()
+
+#             # Detect motion in ROI 2
+#             _, thresh_ROI2, person_in_roi2, _ = detect_motion(frame, blurred_frame, model, fgbg, roi_2_pts_np)
+#             motion_in_roi2 = cv2.countNonZero(thresh_ROI2) > motion_threshold
+#             if motion_in_roi2:
+#                 roi2_motion_time = time.time()
+
+#             # Check direction and person presence after sufficient frames
+#             if frame_count > 15 and motion_in_roi1 and person_in_roi2:
+#                 if last_motion_time is None or (datetime.now() - last_motion_time).total_seconds() > 3:
+#                     if (roi2_motion_time is not None and (roi1_motion_time - roi2_motion_time) <= motion_direction_window):
+#                         # Use the number of detected objects instead of a simple increment
+#                         object_counter += len(detections) if detections else 1
+#                         last_motion_time = datetime.now()
+
+#                         # Handle uploads and alerts
+#                         video_url = aws.upload_video_to_s3bucket(video_path, camera_id)
+#                         snapshot_url = aws.upload_snapshot_to_s3bucket(snapshot_path, camera_id)
+#                         threading.Thread(target=mongo_handler.save_snapshot_to_mongodb, args=(snapshot_url, datetime.now(), camera_id)).start()
+#                         threading.Thread(target=mongo_handler.save_video_to_mongodb, args=(video_url, datetime.now(), camera_id)).start()
+#                         threading.Thread(target=email.send_alert_email, args=(snapshot_path, video_url, camera_id)).start()
+
+#     except Exception as e:
+#         logging.error(f"An error occurred: {e}")
+#         return 0  # Return 0 if an error occurs
+#     finally:
+#         stream.stop()
+
+#     logging.info(f"Total objects detected: {object_counter}")
+#     return object_counter
+
+
+
+
 
 

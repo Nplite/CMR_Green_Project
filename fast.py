@@ -1,59 +1,36 @@
 from fastapi import FastAPI, HTTPException
-import uvicorn
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from typing import List
-from MetalTheft.mongodb import MongoDBHandler
-import logging
-logging.getLogger('ultralytics').setLevel(logging.WARNING) 
-from MetalTheft.constant import *   
-from MetalTheft.mongodb import MongoDBHandler
-from Research.constant import CameraProcessor, MultiCameraSystem, CameraStream
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi import FastAPI, HTTPException
-import uvicorn
 from pydantic import BaseModel
-from typing import Dict, Optional
+from typing import List, Dict, Optional
+import uvicorn
+import logging
 import cv2
 import numpy as np
-from typing import List
 import threading
 import time
-import logging
-from collections import deque
 from datetime import datetime
-from fastapi.responses import JSONResponse
-import cv2
-import numpy as np
+from collections import deque
 import sys
 import yaml
 import torch
-import threading
-import time
-import logging
-from collections import deque
-from datetime import datetime
-from MetalTheft.constant import *
-from MetalTheft.exception import MetalTheptException
-from MetalTheft.send_email import EmailSender
-from MetalTheft.utils.utils import save_snapshot, save_video, draw_boxes, draw_motion_contours
-from MetalTheft.motion_detection import detect_motion, person_detection_ROI3
-from MetalTheft.roi_selector import ROISelector
-from MetalTheft.mongodb import MongoDBHandler
-from MetalTheft.aws import AWSConfig
 from threading import Thread, Lock
 import queue
-logging.getLogger('ultralytics').setLevel(logging.WARNING) 
+from ultralytics import YOLO
+
+from MetalTheft.mongodb import MongoDBHandler
 from MetalTheft.constant import *
 from MetalTheft.exception import MetalTheptException
 from MetalTheft.send_email import EmailSender
 from MetalTheft.utils.utils import save_snapshot, save_video, draw_boxes, draw_motion_contours
-from MetalTheft.motion_detection import detect_motion, person_detection_ROI3
+from MetalTheft.motion_detection import detect_motion, person_detection_ROI
 from MetalTheft.roi_selector import ROISelector
-from MetalTheft.mongodb import MongoDBHandler
 from MetalTheft.aws import AWSConfig
-from ultralytics import YOLO
 
+# Configure logging
+logging.getLogger('ultralytics').setLevel(logging.WARNING)
+
+# Initialize instances
 mongo_handler = MongoDBHandler()
 aws = AWSConfig()
 
@@ -192,7 +169,7 @@ class CameraProcessor:
         """Initialize all necessary components with error handling"""
         try:
             # Initialize YOLO model
-            self.model = YOLO('/home/alluvium/Desktop/Namdeo/CMR_Project/yolov8n.engine', task = 'detect', verbose=True)
+            self.model = YOLO('yolov8n.engine', task = 'detect', verbose=True)
             
             # Initialize background subtractor
             self.fgbg = cv2.createBackgroundSubtractorMOG2(
@@ -212,11 +189,10 @@ class CameraProcessor:
         try:
             combined_frame1 = frame.copy()
             combined_frame2 = frame.copy()
+            person_detected = None
 
-            
             blurred_frame = cv2.GaussianBlur(frame, (21, 21), 0)
 
-            # Process ROI 1
             combined_frame1, thresh_ROI1, _, detections = detect_motion(frame, blurred_frame, model, self.fgbg, self.roi_1_pts_np)
             motion_in_roi1 = cv2.countNonZero(thresh_ROI1) > self.thresh_value
             motion_mask_1 = np.zeros_like(combined_frame1)
@@ -224,19 +200,23 @@ class CameraProcessor:
             combined_frame1 = cv2.addWeighted(combined_frame1, 0.6, motion_mask_1, 0.4, 0)
             
             # Process ROI 2
-            combined_frame2, thresh_ROI2, person_detected, _ = detect_motion(frame, blurred_frame, model, self.fgbg, self.roi_2_pts_np)
+            combined_frame2, thresh_ROI2, _, _ = detect_motion(frame, blurred_frame, model, self.fgbg, self.roi_2_pts_np)
             motion_in_roi2 = cv2.countNonZero(thresh_ROI2) > self.thresh_value
             motion_mask_2 = np.zeros_like(frame)
             cv2.fillPoly(motion_mask_2, [self.roi_2_pts_np], (0,0,0))  
             combined_frame2 = cv2.addWeighted(combined_frame2, 0.6, motion_mask_2, 0.4, 0)
 
             # Process ROI 2
-            combined_frame3, person_in_roi3, person_counter = person_detection_ROI3(frame=frame, roi_points= self.roi_3_pts_np, model= self.model)
+            combined_frame3, person_in_roi3, person_counter = person_detection_ROI(frame=frame, roi_points= self.roi_3_pts_np, model= self.model)
             cv2.polylines(combined_frame3, [self.roi_3_pts_np], isClosed=True, color=(0, 255, 0), thickness=1)
             self.current_people_in_roi3 = len(person_in_roi3)
             
-            if self.frame_count > 20:
-                _, _, person_detected, _ = detect_motion(frame, blurred_frame, model, self.fgbg, self.roi_2_pts_np)
+            # if self.frame_count > 20:
+            #     _, _, person_detected, _ = detect_motion(frame, blurred_frame, model, self.fgbg, self.roi_2_pts_np)
+
+            
+            if self.frame_count > 20:  # ADD COMBINEFRAME2 IN THIS PLACE SO WE CAN TRACK PERSON HERE.
+                combined_frame2, person_detected, _ = person_detection_ROI(frame=combined_frame2, roi_points= self.roi_2_pts_np, model= self.model)
 
             combined_frame = self.process_motion(frame,
                 combined_frame1, combined_frame2, combined_frame3, motion_in_roi1, person_counter,
@@ -265,7 +245,7 @@ class CameraProcessor:
             self.roi2_motion_time = time.time()
             # draw_motion_contours(combined_frame2, thresh_ROI2, self.roi_2_pts_np)
 
-        # combined_frame = cv2.add(combined_frame1, combined_frame2)
+      
         combined_frame = cv2.add(cv2.add(combined_frame1, combined_frame2), combined_frame3)
         self.motion_frame_buffer.append(combined_frame.copy())
 
@@ -344,7 +324,7 @@ class MultiCameraSystem:
     def __init__(self, config_path):
         self.camera_processors = {}
         try:
-            self.model = YOLO('/home/alluvium/Desktop/Namdeo/CMR_Project/yolov8n.engine', task = 'detect', verbose=True)
+            self.model = YOLO('yolov8n.engine', task = 'detect', verbose=True)
         except Exception as e:
             logging.error(f"Failed to load YOLO model: {str(e)}")
             raise
@@ -645,35 +625,20 @@ async def get_camera_status():
         logging.error(f"Error fetching camera status: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/camera_status")
-async def get_camera_status():
-    """
-    Get the status of all cameras: working or not working.
-    """
+@app.get("/camera_ids")
+async def get_camera_ids():
     try:
-        camera_status = []
-        total_cameras = len(camera_system.camera_processors)
+        if not camera_system or not camera_system.camera_processors:
+            raise HTTPException(status_code=404, detail="No cameras are available")
 
-        for camera_id, processor in camera_system.camera_processors.items():
-            # Check if the camera stream is working
-            working = False  # Default to not working
-            retries = 5  # Number of retries for checking the camera
-
-            for _ in range(retries):
-                ret, frame = processor.stream.read()
-                if ret and frame is not None:
-                    working = True
-                    break  # Exit retry loop if camera is working
-                time.sleep(0.5)  # Wait before retrying
-
-            status = "Working" if working else "Not Working"
-            camera_status.append({"camera_id": camera_id, "status": status})
-
-        return {"total_cameras": total_cameras, "camera_status": camera_status}
+        camera_ids = list(camera_system.camera_processors.keys())
+        return {"total_cameras": len(camera_ids), "camera_ids": camera_ids}
 
     except Exception as e:
-        logging.error(f"Error fetching camera status: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logging.error(f"Error fetching camera IDs: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+
 
 
 

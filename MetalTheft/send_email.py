@@ -21,7 +21,7 @@ class EmailSender:
                 subject = "Regarding the Metal Object Theft"
                 # Update the message to include the video URL if provided
                 message = f"""Hi,
-We have observed an incident on This {camera_id}, here Someone is throwing a metal object over the wall.
+We have observed an incident on This camera IP number: {camera_id}, here Someone is throwing a metal object over the wall.
 
 Here is the video link for the incident: {video_url if video_url else "Video not available"}
 
