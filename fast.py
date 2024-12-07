@@ -17,7 +17,6 @@ import torch
 from threading import Thread, Lock
 import queue
 from ultralytics import YOLO
-
 from MetalTheft.mongodb import MongoDBHandler
 from MetalTheft.constant import *
 from MetalTheft.exception import MetalTheptException
@@ -26,13 +25,10 @@ from MetalTheft.utils.utils import save_snapshot, save_video, draw_boxes, draw_m
 from MetalTheft.motion_detection import detect_motion, person_detection_ROI
 from MetalTheft.roi_selector import ROISelector
 from MetalTheft.aws import AWSConfig
-
-# Configure logging
 logging.getLogger('ultralytics').setLevel(logging.WARNING)
-
-# Initialize instances
 mongo_handler = MongoDBHandler()
 aws = AWSConfig()
+email = EmailSender()
 
 
 
@@ -264,12 +260,12 @@ class CameraProcessor:
                 else:
                     motion_in_roi2_to_roi1 = False 
 
-        if (motion_in_roi1 and person_detected) or person_in_roi3:
+        if (motion_in_roi1 and person_detected) or (person_in_roi3 and person_detected):
             if (self.roi2_motion_time is not None and (self.roi1_motion_time - self.roi2_motion_time) <= self.motion_direction_window) or person_in_roi3:
                 if not self.motion_detected_flag:
                     self.video_path = save_video()
                     self.out_motion = cv2.VideoWriter(self.video_path, self.fourcc, 30.0, (frame.shape[1], frame.shape[0]))
-                    self.snapshot_path = save_snapshot(combined_frame)
+                    self.snapshot_path = save_snapshot(combined_frame, camera_id=self.camera_id)
 
                     while self.motion_frame_buffer:
                         self.out_motion.write(self.motion_frame_buffer.popleft())
@@ -293,31 +289,41 @@ class CameraProcessor:
                 self.out_motion.release()
                 start_time = datetime.now()
 
-                self.video_url = self.aws.upload_video_to_s3bucket(self.video_path, self.camera_id)                  
-                self.snapshot_url = self.aws.upload_snapshot_to_s3bucket(self.snapshot_path, self.camera_id)
-                
-                threading.Thread(target=self.mongo_handler.save_snapshot_to_mongodb, args=(self.snapshot_url, start_time, self.camera_id)).start()
-                threading.Thread(target=self.mongo_handler.save_video_to_mongodb, args=(self.video_url, start_time, self.camera_id)).start()
-                threading.Thread(target=self.email.send_alert_email, args=(self.snapshot_path, self.video_url, self.camera_id)).start()
-               
-                # def upload_and_process(video_path, snapshot_path, camera_id, start_time ):
-                #     video_url = self.aws.upload_video_to_s3bucket(video_path, camera_id)
-                #     snapshot_url = self.aws.upload_snapshot_to_s3bucket(snapshot_path, camera_id)
-                #     self.mongo_handler.save_snapshot_to_mongodb(snapshot_url, start_time, camera_id)
-                #     self.mongo_handler.save_video_to_mongodb(video_url, start_time, camera_id)
-                #     self.email.send_alert_email(snapshot_path, video_url, camera_id)
 
-                # threading.Thread(target=upload_and_process, args=(self.video_path, self.snapshot_path,self.camera_id, start_time)).start()
+                def send_data_to_dashboard(video_path, snapshot_path, start_time, camera_id):
+                    try:
+                        video_url = aws.upload_video_to_s3bucket(video_path, camera_id)
+                        snapshot_url = aws.upload_snapshot_to_s3bucket(snapshot_path, camera_id)
+                        mongo_handler.save_snapshot_to_mongodb(snapshot_url, start_time, camera_id)
+                        mongo_handler.save_video_to_mongodb(video_url, start_time, camera_id)
+                        email.send_alert_email(snapshot_path, video_url, camera_id)
+
+                        logging.info(f"Data sending completed for camera {camera_id}")
+                    except Exception as e:
+                        logging.error(f"Error sending data for camera {camera_id}: {str(e)}")
+
+
+                thread = threading.Thread(target=send_data_to_dashboard, args=(self.video_path, self.snapshot_path, start_time, self.camera_id))
+                thread.start()
+
+
+
+                # self.video_url = self.aws.upload_video_to_s3bucket(self.video_path, self.camera_id)                  
+                # self.snapshot_url = self.aws.upload_snapshot_to_s3bucket(self.snapshot_path, self.camera_id)
+                
+                # threading.Thread(target=self.mongo_handler.save_snapshot_to_mongodb, args=(self.snapshot_url, start_time, self.camera_id)).start()
+                # threading.Thread(target=self.mongo_handler.save_video_to_mongodb, args=(self.video_url, start_time, self.camera_id)).start()
+                # threading.Thread(target=self.email.send_alert_email, args=(self.snapshot_path, self.video_url, self.camera_id)).start()
 
 
                 self.counter += 1
-                
-        
+                                                    
+                                                   
         # Draw detection boxes
         cv2.putText(combined_frame, f'Object Count: {self.object_counter}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
         cv2.putText(combined_frame, f'Person Count: {person_counter}', (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
         draw_boxes(combined_frame, detections)
-        
+
         return combined_frame
 
 class MultiCameraSystem:
@@ -464,7 +470,7 @@ class MultiCameraSystem:
 
 
 camera_system = None
-camera_system = MultiCameraSystem('config.yaml')
+camera_system = MultiCameraSystem('MetalTheft/camera.yaml')
 camera_system.start()
 
 
@@ -475,7 +481,6 @@ camera_system.start()
 
 
 app = FastAPI(title="Camera Surveillance System API")
-# Handle CORS protection
 origins = ["*"]
 
 app.add_middleware(
