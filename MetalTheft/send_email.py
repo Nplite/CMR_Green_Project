@@ -1,13 +1,15 @@
 import smtplib
 import sys
 from MetalTheft.constant import *
-# from MetalTheft.logger import logging
+from MetalTheft.logger import logging
 from MetalTheft.exception import MetalTheptException
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
+
+
 
 class EmailSender:
     try:
@@ -52,9 +54,11 @@ AI Security"""
                 server.sendmail(self.sender_email, self.receiver_email, text)
                 server.quit()
 
+                logging.info(f"Alert  Email has been sent to {camera_id}")
                 return f"Email has been sent to: {self.receiver_email}"
+            
             except Exception as e:
-                return f"Error in send_email: {e}"
+                raise MetalTheptException(e, sys) from e
 
 
         def daily_report_email(self, attachment_path=None):
@@ -83,10 +87,14 @@ AI Security"""
                 text = msg.as_string()
                 server.sendmail(self.sender_email, self.receiver_email, text)
                 server.quit()
+                logging.info(f"Daily Report Email has been sent to: {self.receiver_email}")
 
                 return f"Daily Report Email has been sent to: {self.receiver_email}"
+            
             except Exception as e:
-                return f"Error in Daily Report Email: {e}"
+                raise MetalTheptException(e, sys) from e
+
+
 
 
         def monthly_report_email(self, attachment_path=None):
@@ -115,10 +123,13 @@ AI Security"""
                 text = msg.as_string()
                 server.sendmail(self.sender_email, self.receiver_email, text)
                 server.quit()
+                logging.info(f"Monthly Report Email has been sent to: {self.receiver_email}")
 
                 return f"Monthly Report Email has been sent to: {self.receiver_email}"
             except Exception as e:
-                return f"Error in Monthly Report Email: {e}"
+                raise MetalTheptException(e, sys) from e
+
+
 
     except Exception as e:
         raise MetalTheptException(e, sys) from e

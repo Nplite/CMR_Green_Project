@@ -9,45 +9,51 @@ from MetalTheft.utils.utils import save_snapshot, draw_boxes
 # from ultralytics import YOLO
 
 
+
 motion_detected_flag = False
 
 class EuclideanTracker:
-    def __init__(self):
-        self.trackers = []  # Store tracked objects (as (x, y, w, h) tuples)
+    try:
+        def __init__(self):
+            self.trackers = []  # Store tracked objects (as (x, y, w, h) tuples)
 
-    def update(self, detections):
-        if not self.trackers:
-            self.trackers = detections
-            return self.trackers
+        def update(self, detections):
+            try:
+                if not self.trackers:
+                    self.trackers = detections
+                    return self.trackers
 
-        new_trackers = []
+                new_trackers = []
 
-        for detection in detections:
-            closest_tracker = None
-            min_distance = float('inf')
+                for detection in detections:
+                    closest_tracker = None
+                    min_distance = float('inf')
 
-            for tracker in self.trackers:
-                distance = np.linalg.norm(np.array(detection[:2]) - np.array(tracker[:2]))
-                if distance < min_distance:
-                    min_distance = distance
-                    closest_tracker = tracker
+                    for tracker in self.trackers:
+                        distance = np.linalg.norm(np.array(detection[:2]) - np.array(tracker[:2]))
+                        if distance < min_distance:
+                            min_distance = distance
+                            closest_tracker = tracker
 
-            if closest_tracker and min_distance < 50:  # Distance threshold to match
-                new_trackers.append(detection)
-                self.trackers.remove(closest_tracker)
-            else:
-                new_trackers.append(detection)
+                    if closest_tracker and min_distance < 50:  # Distance threshold to match
+                        new_trackers.append(detection)
+                        self.trackers.remove(closest_tracker)
+                    else:
+                        new_trackers.append(detection)
 
-        self.trackers = new_trackers
-        return self.trackers
+                self.trackers = new_trackers
+                return self.trackers
+            
+            except Exception as e:
+                raise MetalTheptException(e, sys) from e
+    except Exception as e:
+        raise MetalTheptException(e, sys) from e
 
 def detect_motion(frame, blurred_frame, model, fgbg, roi_pts_np):
     try:
         combined_frame = apply_roi_blur(frame, blurred_frame, roi_pts_np)
         results = model.predict(combined_frame)
         # annotator = Annotator(combined_frame, font_size= 6)
-
-
         detections = []
         person_detected = False
         for r in results:
@@ -80,36 +86,38 @@ def detect_motion(frame, blurred_frame, model, fgbg, roi_pts_np):
         raise MetalTheptException(e, sys) from e
 
 def person_detection_ROI(frame, roi_points, model):
-    """Draw tracked persons with circles and detected persons with rectangles."""
-    tracker = EuclideanTracker()
-    mask = np.zeros_like(frame)
-    cv2.fillPoly(mask, [roi_points], (255, 255, 255))
-    roi_frame = cv2.bitwise_and(frame, mask)
-    results = model(roi_frame)
+    try:
+        """Draw tracked persons with circles and detected persons with rectangles."""
+        tracker = EuclideanTracker()
+        mask = np.zeros_like(frame)
+        cv2.fillPoly(mask, [roi_points], (255, 255, 255))
+        roi_frame = cv2.bitwise_and(frame, mask)
+        results = model(roi_frame)
 
-    detections = []
-    
-    person_count = 0
+        detections = []
+        person_count = 0
 
-    for r in results:
-        boxes = r.boxes
-        for box in boxes:
-            if box.cls == 0:  # Person class
-                x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
-                w, h = x2 - x1, y2 - y1  # Calculate width and height
-                detections.append((x1, y1, w, h))  # Store as (x, y, w, h)
-                cv2.rectangle(roi_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
-                cv2.putText(roi_frame, "Person", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
-                
-                person_count += 1
+        for r in results:
+            boxes = r.boxes
+            for box in boxes:
+                if box.cls == 0:  # Person class
+                    x1, y1, x2, y2 = map(int, box.xyxy[0])  # Bounding box coordinates
+                    w, h = x2 - x1, y2 - y1  # Calculate width and height
+                    detections.append((x1, y1, w, h))  # Store as (x, y, w, h)
+                    cv2.rectangle(roi_frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+                    cv2.putText(roi_frame, "Person", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+                    # person_detected = detections
+                    person_count += 1
 
-    tracked_objects = tracker.update(detections)
-    for (x, y, w, h) in tracked_objects:
-        center_x, center_y = int(x + w / 2), int(y + h / 2)  # Calculate center
-        cv2.circle(roi_frame, (center_x, center_y), 5, (255, 0, 0), -1)
-        # cv2.putText(roi_frame, "Tracked", (center_x - 10, center_y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+        tracked_objects = tracker.update(detections)
+        for (x, y, w, h) in tracked_objects:
+            center_x, center_y = int(x + w / 2), int(y + h / 2)  # Calculate center
+            cv2.circle(roi_frame, (center_x, center_y), 5, (255, 0, 0), -1)
+            # cv2.putText(roi_frame, "Tracked", (center_x - 10, center_y - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
 
-    return roi_frame , detections, person_count
+        return roi_frame , detections, person_count
+    except Exception as e:
+        raise MetalTheptException(e, sys) from e
 
 def apply_roi_blur(frame, blurred_frame, roi_pts_np):
     try:
@@ -128,7 +136,6 @@ def apply_roi_blur(frame, blurred_frame, roi_pts_np):
     except Exception as e:
         raise MetalTheptException(e, sys) from e
     
-
 
 
 

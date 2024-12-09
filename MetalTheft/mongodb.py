@@ -2,6 +2,7 @@ import sys
 import os
 from pymongo import MongoClient
 from datetime import datetime, timedelta
+from MetalTheft.logger import logging
 from MetalTheft.exception import MetalTheptException
 
 class MongoDBHandler:
@@ -45,6 +46,7 @@ class MongoDBHandler:
                 print(f"Updated existing document for date: {date_folder} and camera_id: {camera_id}")
             
             print(f"Saved snapshot and metadata to MongoDB: {document}")
+            logging.info(f"Sending new snapshot document to mongodb for date: {date_folder} and camera_id: {camera_id}")
 
         except Exception as e:
             raise MetalTheptException(e, sys) from e
@@ -74,11 +76,12 @@ class MongoDBHandler:
             )
             
             if result.upserted_id:
-                print(f"Created new document for date: {date_folder} and camera_id: {camera_id}")
+                print(f"Created new snapshot document for date: {date_folder} and camera_id: {camera_id}")
             else:
                 print(f"Updated existing document for date: {date_folder} and camera_id: {camera_id}")
             
             print(f"Saved video and metadata to MongoDB: {document}")
+            logging.info(f"Sending new video document to mongodb for date: {date_folder} and camera_id: {camera_id}")
 
         except Exception as e:
             raise MetalTheptException(e, sys) from e
@@ -88,6 +91,7 @@ class MongoDBHandler:
         try:
             date_folder = datetime(year, month, day).strftime('%Y-%m-%d')
             result = self.snapshot_collection.find_one({'date': date_folder, 'camera_id': camera_id})
+            logging.info(f"Fetch Snapshot from MongoDB for a specific date:{year}_{month}_{day} and camera_id:{camera_id}")
             return result['images'] if result else None
         except Exception as e:
             raise MetalTheptException(e, sys) from e
@@ -97,6 +101,7 @@ class MongoDBHandler:
         try:
             date_folder = datetime(year, month, day).strftime('%Y-%m-%d')
             result = self.video_collection.find_one({'date': date_folder, 'camera_id': camera_id})
+            logging.info(f"Fetch videos from MongoDB for a specific date:{year}_{month}_{day} and camera_id:{camera_id}")
             return result['videos'] if result else None
         except Exception as e:
             raise MetalTheptException(e, sys) from e
@@ -122,6 +127,7 @@ class MongoDBHandler:
 
             # Combine snapshots from all results
             snapshots = [image for result in results for image in result['images']]
+            logging.info(f"Fetch Snapshot from MongoDB for a specific month:{year}_{month} and camera_id:{camera_id}")
             return snapshots if snapshots else None
         except Exception as e:
             raise MetalTheptException(e, sys) from e
@@ -147,6 +153,7 @@ class MongoDBHandler:
 
             # Combine videos from all results
             videos = [video for result in results for video in result['videos']]
+            logging.info(f"Fetch videos from MongoDB for a specific month:{year}_{month} and camera_id:{camera_id}")
             return videos if videos else None
         except Exception as e:
             raise MetalTheptException(e, sys) from e
