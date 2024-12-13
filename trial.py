@@ -13,25 +13,27 @@ from datetime import datetime
 from collections import deque
 import sys
 import yaml
+import os
 import torch
 from threading import Thread, Lock
 import queue
 from ultralytics import YOLO
-from MetalTheft.mongodb import MongoDBHandler
-from MetalTheft.constant import *
+from MetalTheft.mongodb import MongoDBHandlerSaving, MongoDBHandlerFetching
+# from MetalTheft.constant import *
 from MetalTheft.exception import MetalTheptException
 from MetalTheft.send_email import EmailSender
 from MetalTheft.utils.utils import send_data_to_dashboard
 from MetalTheft.utils.utils import save_snapshot, save_video, draw_boxes, draw_motion_contours
 from MetalTheft.motion_detection import detect_motion, person_detection_ROI
-from MetalTheft.roi_selector import ROISelector
 from MetalTheft.aws import AWSConfig
 logging.getLogger('ultralytics').setLevel(logging.WARNING)
 from vidgear.gears import CamGear, WriteGear
-mongo_handler = MongoDBHandler()
+from dotenv import load_dotenv
+load_dotenv()
+CC_EMAIL = os.getenv('CC_EMAIL')
+# mongo_handler = MongoDBHandlerSaving()
 aws = AWSConfig()
-email = EmailSender()
-
+email = EmailSender(cc_email = CC_EMAIL)
 
 
 class CameraStream:
@@ -115,8 +117,8 @@ class CameraProcessor:
             
             # Initialize processing attributes
             self.aws = AWSConfig()
-            self.mongo_handler = MongoDBHandler()
-            self.email = EmailSender()
+            # self.mongo_handler = MongoDBHandler()
+            self.email = EmailSender(cc_email = CC_EMAIL)
             self.setup_complete = True
             self.alpha = 0.6
             self.counter = 1
@@ -186,7 +188,8 @@ class CameraProcessor:
         """Initialize all necessary components with error handling"""
         try:
             # Initialize YOLO model
-            self.model = YOLO('yolov8n.engine', task = 'detect', verbose=True)
+            # self.model = YOLO('yolov8n.engine', task = 'detect', verbose=True)
+            self.model = YOLO('yolov8n.pt',  verbose=True)
             
             # Initialize background subtractor
             self.fgbg = cv2.createBackgroundSubtractorMOG2(
@@ -204,12 +207,13 @@ class CameraProcessor:
             return frame, None
 
         try:
+            # frame = cv2.resize(frame, (1400, 900))
             combined_frame1 = frame.copy()
             combined_frame2 = frame.copy()
             person_detected = None
 
             blurred_frame = cv2.GaussianBlur(frame, (21, 21), 0)
-            
+
             combined_frame1, thresh_ROI1, _, detections = detect_motion(frame, blurred_frame, model, self.fgbg, self.roi_1_pts_np)
             motion_in_roi1 = cv2.countNonZero(thresh_ROI1) > self.thresh_value
             motion_mask_1 = np.zeros_like(combined_frame1)
@@ -282,7 +286,7 @@ class CameraProcessor:
                     else:
                         motion_in_roi2_to_roi1 = False 
 
-            if (motion_in_roi1 and person_detected) or (person_in_roi3 and person_detected):
+            if (motion_in_roi1 and person_detected) or (person_in_roi3 and person_detected) or person_in_roi3:
                 if (self.roi2_motion_time is not None and (self.roi1_motion_time - self.roi2_motion_time) <= self.motion_direction_window) or person_in_roi3:
                     if not self.motion_detected_flag:
                         self.video_path = save_video()
@@ -337,7 +341,8 @@ class MultiCameraSystem:
     def __init__(self, config_path):
         self.camera_processors = {}
         try:
-            self.model = YOLO('yolov8n.engine', task = 'detect', verbose=True)
+            # self.model = YOLO('yolov8n.engine', task = 'detect', verbose=True)
+            self.model = YOLO('yolov8n.pt',  verbose=True)
         except Exception as e:
             logging.error(f"Failed to load YOLO model: {str(e)}")
             raise MetalTheptException(e, sys) from e
@@ -484,8 +489,8 @@ class MultiCameraSystem:
 
 camera_system = None
 try:
-    camera_system = MultiCameraSystem('MetalTheft/camera.yaml')
-    # camera_system = MultiCameraSystem('config.yaml')
+    # camera_system = MultiCameraSystem('MetalTheft/camera.yaml')
+    camera_system = MultiCameraSystem('config.yaml')
     camera_system.start()
 except Exception as e:
     raise MetalTheptException(e, sys) from e
@@ -550,7 +555,7 @@ class SnapshotCountResponse(BaseModel):
     snapshots: List[SnapDate]  # Replace SnapDate with your snapshot model
 
 
-mongo_handler = MongoDBHandler()
+mongo_handler_fetching = MongoDBHandlerFetching()
 @app.get("/")
 def read_root():
     return {"message": "Welcome to the FastAPI Metal Theft Detection System"}
@@ -592,11 +597,15 @@ async def get_people_count(camera_id: int):
     except HTTPException as e:
         return JSONResponse(status_code=e.status_code, content={"detail": e.detail})
 
+
+
+    
+
 @app.get("/snapdate/{year}/{month}/{day}", response_model=List[SnapDate])
 async def get_snapshots(year: int, month: int, day: int, camera_id:int):
     """Get snapshots by date."""
     try:
-        snapshots = mongo_handler.fetch_snapshots_by_date_and_camera(year, month, day, camera_id)
+        snapshots = mongo_handler_fetching.fetch_snapshots_by_date_and_camera(year, month, day, camera_id)
         if snapshots:
             return snapshots
         raise HTTPException(status_code=404, detail="Snapshots not found for the given date")
@@ -607,7 +616,7 @@ async def get_snapshots(year: int, month: int, day: int, camera_id:int):
 async def get_snapshots_by_month(year: int, month: int, camera_id:int):
     """Get snapshots by month."""
     try:
-        snapshots = mongo_handler.fetch_snapshots_by_month_and_camera(year, month, camera_id)
+        snapshots = mongo_handler_fetching.fetch_snapshots_by_month_and_camera(year, month, camera_id)
         if snapshots:
             return snapshots
         raise HTTPException(status_code=404, detail="No snapshots found for the given month")
@@ -618,7 +627,7 @@ async def get_snapshots_by_month(year: int, month: int, camera_id:int):
 async def get_snapshots_with_count(year: int, month: int, day: int, camera_id: int):
     """Get the count of snapshots and their details by date."""
     try:
-        snapshots = mongo_handler.fetch_snapshots_by_date_and_camera(year, month, day, camera_id)
+        snapshots = mongo_handler_fetching.fetch_snapshots_by_date_and_camera(year, month, day, camera_id)
         if snapshots:
             return SnapshotCountResponse(count=len(snapshots), snapshots=snapshots)
         raise HTTPException(status_code=404, detail="Snapshots not found for the given date")

@@ -4,6 +4,7 @@ import os
 import cv2
 import time
 import cv2
+import asyncio
 import smtplib
 from datetime import datetime
 from MetalTheft.constant import *
@@ -16,10 +17,13 @@ module_directory = os.path.abspath("MetalTheft")
 sys.path.insert(0, module_directory)
 from aws import AWSConfig
 from send_email import EmailSender
-from mongodb import MongoDBHandler
+from mongodb import MongoDBHandlerSaving
+from dotenv import load_dotenv
+load_dotenv()
+CC_EMAIL = os.getenv('CC_EMAIL')
+mongo_handler_saving = MongoDBHandlerSaving()
 aws = AWSConfig()
-mongo_handler = MongoDBHandler()
-email = EmailSender()
+email = EmailSender(cc_email = CC_EMAIL)
 
 
 
@@ -27,13 +31,13 @@ email = EmailSender()
 def get_current_time_stamp():
     return f"{datetime.now().strftime('%Y-%m-%d-%H-%M-%S')}"
 
-    
+
 def send_data_to_dashboard(video_path, snapshot_path, start_time, camera_id):
     try:
         video_url = aws.upload_video_to_s3bucket(video_path, camera_id)
         snapshot_url = aws.upload_snapshot_to_s3bucket(snapshot_path, camera_id)
-        mongo_handler.save_snapshot_to_mongodb(snapshot_url, start_time, camera_id)
-        mongo_handler.save_video_to_mongodb(video_url, start_time, camera_id)
+        mongo_handler_saving.save_snapshot_to_mongodb(snapshot_url, start_time, camera_id)
+        mongo_handler_saving.save_video_to_mongodb(video_url, start_time, camera_id)
         email.send_alert_email(snapshot_path, video_url, camera_id)
 
         logging.info(f"Data sending completed for camera_Id: {camera_id}.")

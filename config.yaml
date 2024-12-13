@@ -1,4 +1,15 @@
 
+  # camera_100:
+  #   RTSP_URL: 0
+  #   roi_1_pts_np: [[379, 47], [377, 473], [429, 473], [427, 44]]
+  #   roi_2_pts_np: [[341, 24], [342, 474], [35, 471], [30, 21]]
+  #   roi_3_pts_np: [[482, 35], [491, 470], [598, 472], [589, 31]]
+  #   thresh_roi: 200
+  #   motion_buffer_duration: 5
+  #   motion_buffer_fps: 30
+  #   motion_direction_window: 2  
+
+
 
 
 
@@ -6,247 +17,191 @@
 
 cameras:
 
-
   camera_217:
-    RTSP_URL: "rtsp://admin:Control@12@201.202.202.217/cam/realmonitor?channel=1&subtype=0"
-    roi_1_pts_np: [[885, 130], [917, 130], [891, 888], [800, 889]]
-    roi_2_pts_np: [[854, 189], [627, 896], [6, 886], [415, 204]]
-    roi_3_pts_np: [[932, 167], [932, 890], [1267, 889], [1270, 208]]
-    thresh_roi: 200
+    RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.217/cam/realmonitor?channel=1&subtype=0"
+    # roi_1_pts_np: [[885, 130], [917, 130], [891, 888], [800, 889]]
+    # roi_2_pts_np: [[854, 189], [627, 896], [6, 886], [415, 204]]
+    # roi_3_pts_np: [[932, 167], [932, 890], [1267, 889], [1270, 208]]
+    roi_1_pts_np: [[755, 719], [889, 719], [918, 137], [897, 137]]
+    roi_2_pts_np: [[852, 162], [617, 718], [2, 718], [489, 157]]
+    roi_3_pts_np: [[928, 151], [910, 718], [1278, 717], [1150, 160]]
+    thresh_roi: 500
     motion_buffer_duration: 5
-    motion_buffer_fps: 30
+    motion_buffer_fps: 15
     motion_direction_window: 2
-
-
 
   camera_126:
-    RTSP_URL: "rtsp://admin:Control@12@201.202.202.126/cam/realmonitor?channel=1&subtype=0"
-    roi_1_pts_np: [[630, 219], [657, 211], [871, 716], [797, 716]]
-    #[[620, 203], [652, 194], [930, 712], [796, 712]]
-    roi_2_pts_np: [[613, 249], [698, 716], [21, 710], [179, 329]]
-    roi_3_pts_np: [[690, 219], [979, 713], [1278, 638], [938, 198]]
-    thresh_roi: 200
+    RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.126/cam/realmonitor?channel=1&subtype=0"
+    roi_1_pts_np: [[793, 719], [928, 718], [697, 150], [669, 155]]
+    roi_2_pts_np: [[670, 200], [767, 713], [2, 714], [153, 234]]
+    roi_3_pts_np: [[738, 174], [983, 712], [1279, 714], [979, 183]]
+    thresh_roi: 500
     motion_buffer_duration: 5
-    motion_buffer_fps: 30
+    motion_buffer_fps: 15
     motion_direction_window: 2
 
 
+  camera_186:
+    RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.186/cam/realmonitor?channel=1&subtype=0"
+    roi_1_pts_np: [[430, 719], [536, 718], [662, 94], [650, 90]]
+    roi_2_pts_np: [[665, 130], [557, 717], [1256, 717], [809, 144]]
+    roi_3_pts_np: [[631, 105], [366, 716], [2, 717], [442, 86]]
+    thresh_roi: 500
+    motion_buffer_duration: 5
+    motion_buffer_fps: 25
+    motion_direction_window: 2
 
 
-  # camera_186:
-  #   RTSP_URL: "rtsp://admin:Control@12@201.202.202.186/cam/realmonitor?channel=1&subtype=0"
-  #   roi_1_pts_np: [[540, 199], [555, 192], [839, 715], [769, 710]]
-  #   roi_2_pts_np: [[733, 710], [527, 195], [424, 220], [227, 713]]
-  #   roi_3_pts_np: [[858, 716], [566, 193], [903, 128], [1275, 669]]
-  #   thresh_roi: 200
-  #   motion_buffer_duration: 5
-  #   motion_buffer_fps: 30
-  #   motion_direction_window: 2
+  camera_188:
+    RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.188/cam/realmonitor?channel=1&subtype=0"
+    roi_1_pts_np: [[924, 717], [800, 717], [691, 99], [710, 95]]
+    roi_2_pts_np: [[686, 103], [778, 719], [2, 716], [515, 104]]
+    roi_3_pts_np: [[730, 120], [935, 716], [1278, 717], [945, 118]]
+    # roi_1_pts_np: [[847, 798], [729, 793], [728, 91], [743, 89]]      # Resize points
+    # roi_2_pts_np: [[711, 140], [675, 794], [18, 796], [448, 128]]
+    # roi_3_pts_np: [[774, 120], [867, 793], [1317, 792], [1041, 152]]
+    thresh_roi: 500
+    motion_buffer_duration: 5
+    motion_buffer_fps: 25
+    motion_direction_window: 2
 
 
-
-  # camera_188:
-  #   RTSP_URL: "rtsp://admin:Control@12@201.202.202.188/cam/realmonitor?channel=1&subtype=0"
-  #   roi_1_pts_np: [[1, 396], [863, 222], [863, 208], [1, 317]]
-  #   roi_2_pts_np: [[803, 260], [927, 329], [548, 716], [8, 551]]
-  #   roi_3_pts_np: [[1, 301], [782, 200], [624, 105], [3, 162]]
-  #   thresh_roi: 200
-  #   motion_buffer_duration: 5
-  #   motion_buffer_fps: 30
-  #   motion_direction_window: 2
-
+  camera_6:
+    RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.6/cam/realmonitor?channel=1&subtype=0"
+    roi_1_pts_np: [[32, 237], [47, 237], [103, 716], [16, 717]]
+    roi_2_pts_np: [[120, 705], [75, 227], [584, 154], [1273, 564]]
+    roi_3_pts_np: [[2, 310], [11, 311], [7, 357], [3, 351]]
+    thresh_roi: 2000
+    motion_buffer_duration: 5
+    motion_buffer_fps: 25
+    motion_direction_window: 2
 
 
+  camera_7:
+    RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.7/cam/realmonitor?channel=1&subtype=0"
+    roi_1_pts_np: [[257, 132], [276, 136], [242, 716], [138, 716]]
+    roi_2_pts_np: [[302, 130], [364, 712], [1270, 697], [536, 138]]
+    roi_3_pts_np: [[252, 114], [124, 713], [2, 402], [105, 134]]
+    thresh_roi: 2000
+    motion_buffer_duration: 5
+    motion_buffer_fps: 10
+    motion_direction_window: 2
 
-  # camera_6:
-  #   RTSP_URL: "rtsp://admin:Control@12@201.202.202.6/cam/realmonitor?channel=1&subtype=0"
-  #   roi_1_pts_np: [[32, 237], [47, 237], [103, 716], [16, 717]]
-  #   #[[31, 231], [61, 180], [105, 705], [18, 708]]
-  #   roi_2_pts_np: [[120, 705], [75, 227], [584, 154], [1273, 564]]
-  #   roi_3_pts_np: [[2, 310], [11, 311], [7, 357], [3, 351]]
-  #   thresh_roi: 500
-  #   motion_buffer_duration: 5
-  #   motion_buffer_fps: 30
-  # #   motion_direction_window: 2
+  camera_8:
+    RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.8/cam/realmonitor?channel=1&subtype=0"
+    roi_1_pts_np: [[200, 95], [216, 97], [128, 716], [35, 717]]
+    roi_2_pts_np: [[233, 101], [197, 709], [1110, 706], [443, 99]]
+    roi_3_pts_np: [[190, 74], [23, 691], [1, 325], [135, 69]]
+    thresh_roi: 2000
+    motion_buffer_duration: 5
+    motion_buffer_fps: 10
+    motion_direction_window: 2
 
-  # camera_7:
-  #   RTSP_URL: "rtsp://admin:Control@12@201.202.202.7/cam/realmonitor?channel=1&subtype=0"
-  #   roi_1_pts_np: [[257, 132], [276, 136], [242, 716], [138, 716]]
-  #   #[[265, 103], [285, 103], [273, 712], [137, 711]]
-  #   roi_2_pts_np: [[302, 130], [364, 712], [1270, 697], [536, 138]]
-  #   roi_3_pts_np: [[252, 114], [124, 713], [2, 402], [105, 134]]
-  #   thresh_roi: 500
-  #   motion_buffer_duration: 5
-  #   motion_buffer_fps: 30
-  #   motion_direction_window: 2
+  camera_10:
+    RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.10/cam/realmonitor?channel=1&subtype=0"
+    roi_1_pts_np: [[30, 211], [44, 210], [180, 713], [120, 716]]
+    roi_2_pts_np: [[60, 184], [274, 712], [1275, 608], [328, 128]]
+    roi_3_pts_np: [[27, 214], [106, 714], [1, 707], [3, 262]]
+    thresh_roi: 2000
+    motion_buffer_duration: 5
+    motion_buffer_fps: 10
+    motion_direction_window: 2
 
+  camera_70:
+    RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.70/cam/realmonitor?channel=1&subtype=0"
+    roi_1_pts_np: [[771, 137], [796, 138], [765, 714], [645, 715]]
+    roi_2_pts_np: [[835, 118], [849, 714], [1273, 711], [1268, 209]]
+    roi_3_pts_np: [[487, 80], [693, 358], [570, 715], [6, 700]]
+    thresh_roi: 500
+    motion_buffer_duration: 5
+    motion_buffer_fps: 25
+    motion_direction_window: 2
 
+  camera_58:
+    RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.58/cam/realmonitor?channel=1&subtype=0"
+    roi_1_pts_np: [[407, 230], [420, 230], [534, 718], [464, 716]]
+    roi_2_pts_np: [[448, 241], [645, 709], [1269, 700], [670, 196]]
+    roi_3_pts_np: [[389, 244], [397, 714], [51, 712], [198, 296]]
+    thresh_roi: 500
+    motion_buffer_duration: 5
+    motion_buffer_fps: 25
+    motion_direction_window: 2
 
-  # camera_8:
-  #   RTSP_URL: "rtsp://admin:Control@12@201.202.202.8/cam/realmonitor?channel=1&subtype=0"
-  #   roi_1_pts_np: [[200, 95], [216, 97], [128, 716], [35, 717]]
-  #   #[[199, 91], [221, 96], [129, 714], [36, 714]]
-  #   roi_2_pts_np: [[233, 101], [197, 709], [1110, 706], [443, 99]]
-  #   roi_3_pts_np: [[190, 74], [23, 691], [1, 325], [135, 69]]
-  #   thresh_roi: 500
-  #   motion_buffer_duration: 5
-  #   motion_buffer_fps: 30
-  #   motion_direction_window: 2
+  camera_60:
+    RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.60/cam/realmonitor?channel=1&subtype=0"
+    roi_1_pts_np: [[710, 140], [722, 140], [631, 718], [553, 717]]
+    roi_2_pts_np: [[734, 147], [686, 713], [1122, 712], [922, 163]]
+    roi_3_pts_np: [[680, 182], [515, 719], [12, 714], [472, 162]]
+    thresh_roi: 500
+    motion_buffer_duration: 5
+    motion_buffer_fps: 25
+    motion_direction_window: 2
 
+  camera_36:
+    RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.36/cam/realmonitor?channel=1&subtype=0"
+    # roi_1_pts_np: [[373, 797], [604, 796], [546, 91], [523, 95]]
+    # roi_2_pts_np: [[585, 170], [666, 795], [1343, 793], [742, 184]]
+    # roi_3_pts_np: [[490, 150], [349, 793], [2, 758], [287, 186]]
+    roi_1_pts_np: [[415, 719], [572, 717], [504, 73], [486, 76]]
+    roi_2_pts_np: [[526, 170], [592, 717], [1275, 716], [667, 168]]
+    roi_3_pts_np: [[460, 109], [293, 716], [2, 716], [291, 110]]
+    thresh_roi: 500
+    motion_buffer_duration: 5
+    motion_buffer_fps: 25
+    motion_direction_window: 2
 
-  # camera_10:
-  #   RTSP_URL: "rtsp://admin:Control@12@201.202.202.10/cam/realmonitor?channel=1&subtype=0"
-  #   roi_1_pts_np: [[30, 211], [44, 210], [180, 713], [120, 716]]
-  #   #[[33, 168], [46, 165], [218, 715], [118, 716]]
-  #   roi_2_pts_np: [[60, 184], [274, 712], [1275, 608], [328, 128]]
-  #   roi_3_pts_np: [[27, 214], [106, 714], [1, 707], [3, 262]]
-  #   thresh_roi: 500
-  #   motion_buffer_duration: 5
-  #   motion_buffer_fps: 30
-  #   motion_direction_window: 2
+  camera_42:
+    RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.42/cam/realmonitor?channel=1&subtype=0"
+    roi_1_pts_np: [[999, 360], [1010, 360], [940, 715], [901, 713]]
+    roi_2_pts_np: [[970, 418], [870, 717], [7, 700], [549, 346]]
+    roi_3_pts_np: [[1010, 437], [976, 713], [1272, 713], [1273, 487]]
+    thresh_roi: 500
+    motion_buffer_duration: 5
+    motion_buffer_fps: 25
+    motion_direction_window: 2
 
+  camera_45:
+    RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.45/cam/realmonitor?channel=1&subtype=0"
+    roi_1_pts_np: [[445, 295], [460, 294], [631, 718], [501, 715]]
+    roi_2_pts_np: [[469, 288], [724, 715], [1271, 693], [535, 280]]
+    roi_3_pts_np: [[439, 320], [477, 715], [80, 715], [300, 339]]
+    thresh_roi: 500
+    motion_buffer_duration: 5
+    motion_buffer_fps: 25
+    motion_direction_window: 2
 
+  camera_51:
+    RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.51/cam/realmonitor?channel=1&subtype=0"
+    roi_1_pts_np: [[778, 243], [804, 239], [873, 716], [785, 714]]
+    roi_2_pts_np: [[820, 250], [920, 713], [1274, 711], [1090, 240]]
+    roi_3_pts_np: [[722, 372], [689, 712], [153, 717], [344, 370]]
+    thresh_roi: 500
+    motion_buffer_duration: 5
+    motion_buffer_fps: 25
+    motion_direction_window: 2
 
-  # camera_19:
-  #   RTSP_URL: "rtsp://admin:Control@12@201.202.202.19/cam/realmonitor?channel=1&subtype=0"
-  #   roi_1_pts_np: [[293, 338], [1272, 498], [1269, 415], [317, 320]]
-  #   roi_2_pts_np: [[258, 347], [1272, 662], [458, 713], [85, 403]]
-  #   roi_3_pts_np: [[671, 35], [685, 109], [1004, 86], [989, 17]]
-  #   thresh_roi: 200
-  #   motion_buffer_duration: 5
-  #   motion_buffer_fps: 30
-  #   motion_direction_window: 2
+  camera_52:
+    RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.52/cam/realmonitor?channel=1&subtype=0"
+    roi_1_pts_np: [[632, 241], [644, 241], [586, 718], [517, 716]]
+    roi_2_pts_np: [[654, 277], [644, 712], [1087, 717], [870, 253]]
+    roi_3_pts_np: [[617, 259], [509, 715], [3, 711], [458, 287]]
+    thresh_roi: 500
+    motion_buffer_duration: 5
+    motion_buffer_fps: 25
+    motion_direction_window: 2
 
-
-
-  # camera_70:
-  #   RTSP_URL: "rtsp://admin:secure@123@201.202.202.70/cam/realmonitor?channel=1&subtype=0"
-  #   roi_1_pts_np: [[771, 137], [796, 138], [765, 714], [645, 715]]
-  #   # [[770, 122], [804, 126], [780, 714], [646, 716]]
-  #   roi_2_pts_np: [[835, 118], [849, 714], [1273, 711], [1268, 209]]
-  #   roi_3_pts_np: [[487, 80], [693, 358], [570, 715], [6, 700]]
-  #   thresh_roi: 200
-  #   motion_buffer_duration: 5
-  #   motion_buffer_fps: 30
-  #   motion_direction_window: 2
-
-
-
-  # camera_58:
-  #   RTSP_URL: "rtsp://admin:secure@123@201.202.202.58/cam/realmonitor?channel=1&subtype=0"
-  #   roi_1_pts_np: [[407, 230], [420, 230], [534, 718], [464, 716]]
-  #   #[[401, 169], [417, 169], [602, 718], [459, 717]]
-  #   roi_2_pts_np: [[448, 241], [645, 709], [1269, 700], [670, 196]]
-  #   roi_3_pts_np: [[389, 244], [397, 714], [51, 712], [198, 296]]
-  #   thresh_roi: 200
-  #   motion_buffer_duration: 5
-  #   motion_buffer_fps: 30
-  #   motion_direction_window: 2
-
-
-
-
-  # camera_60:
-  #   RTSP_URL: "rtsp://admin:secure@123@201.202.202.60/cam/realmonitor?channel=1&subtype=0"
-  #   roi_1_pts_np: [[710, 140], [722, 140], [631, 718], [553, 717]]
-  #   #[[718, 111], [728, 113], [667, 716], [552, 713]]
-  #   roi_2_pts_np: [[734, 147], [686, 713], [1122, 712], [922, 163]]
-  #   roi_3_pts_np: [[680, 182], [515, 719], [12, 714], [472, 162]]
-  #   thresh_roi: 200
-  #   motion_buffer_duration: 5
-  #   motion_buffer_fps: 30
-  #   motion_direction_window: 2
-
-  # camera_36:
-  #   RTSP_URL: "rtsp://admin:secure@123@201.202.202.36/cam/realmonitor?channel=1&subtype=0"
-  #   roi_1_pts_np: [[534, 216], [556, 220], [398, 716], [239, 711]]
-  #   roi_2_pts_np: [[571, 340], [501, 715], [995, 717], [719, 340]]
-  #   #[[581, 241], [489, 713], [983, 712], [689, 256]]
-  #   roi_3_pts_np: [[498, 241], [211, 708], [3, 700], [320, 240]]
-  #   thresh_roi: 2000
-  #   motion_buffer_duration: 5
-  #   motion_buffer_fps: 30
-  #   motion_direction_window: 2
-
-
-
-
-  # camera_40:
-  #   RTSP_URL: "rtsp://admin:secure@123@201.202.202.40/cam/realmonitor?channel=1&subtype=0"
-  #   roi_1_pts_np: [[525, 76], [538, 76], [605, 716], [497, 713]]
-  #   roi_2_pts_np: [[508, 93], [459, 712], [4, 710], [238, 62]]
-  #   roi_3_pts_np: [[549, 87], [616, 714], [1273, 712], [732, 101]]
-  #   thresh_roi: 200
-  #   motion_buffer_duration: 5
-  #   motion_buffer_fps: 30
-  #   motion_direction_window: 2
-
-  # camera_42:
-  #   RTSP_URL: "rtsp://admin:secure@123@201.202.202.42/cam/realmonitor?channel=1&subtype=0"
-  #   roi_1_pts_np: [[999, 360], [1010, 360], [940, 715], [901, 713]]
-  #   roi_2_pts_np: [[970, 418], [870, 717], [7, 700], [549, 346]]
-  #   roi_3_pts_np: [[1010, 437], [976, 713], [1272, 713], [1273, 487]]
-  #   thresh_roi: 200
-  #   motion_buffer_duration: 5
-  #   motion_buffer_fps: 30
-  #   motion_direction_window: 2
-
-  # camera_45:
-  #   RTSP_URL: "rtsp://admin:secure@123@201.202.202.45/cam/realmonitor?channel=1&subtype=0"
-  #   roi_1_pts_np: [[445, 295], [460, 294], [631, 718], [501, 715]]
-  #   #[[443, 288], [456, 285], [665, 712], [492, 716]]
-  #   roi_2_pts_np: [[469, 288], [724, 715], [1271, 693], [535, 280]]
-  #   roi_3_pts_np: [[439, 320], [477, 715], [80, 715], [300, 339]]
-  #   thresh_roi: 200
-  #   motion_buffer_duration: 5
-  #   motion_buffer_fps: 30
-  #   motion_direction_window: 2
-
-
-  # camera_47:
-  #   RTSP_URL: "rtsp://admin:secure@123@201.202.202.47/cam/realmonitor?channel=1&subtype=0"
-  #   roi_1_pts_np: [[776, 133], [791, 136], [769, 714], [679, 716]]
-  #   #[[768, 83], [781, 89], [772, 711], [611, 707]]
-  #   roi_2_pts_np: [[754, 130], [558, 713], [10, 703], [655, 120]]
-  #   roi_3_pts_np: [[800, 130], [790, 704], [1264, 712], [1070, 160]]
-  #   thresh_roi: 200
-  #   motion_buffer_duration: 5
-  #   motion_buffer_fps: 30
-  #   motion_direction_window: 2
-
-  # camera_51:
-  #   RTSP_URL: "rtsp://admin:secure@123@201.202.202.51/cam/realmonitor?channel=1&subtype=0"
-  #   roi_1_pts_np: [[778, 243], [804, 239], [873, 716], [785, 714]]
-  #   #[[747, 194], [769, 191], [865, 713], [744, 714]]
-  #   roi_2_pts_np: [[820, 250], [920, 713], [1274, 711], [1090, 240]]
-  #   roi_3_pts_np: [[722, 372], [689, 712], [153, 717], [344, 370]]
-  #   thresh_roi: 200
-  #   motion_buffer_duration: 5
-  #   motion_buffer_fps: 30
-  #   motion_direction_window: 2
-
-
-
-
-  # camera_52:
-  #   RTSP_URL: "rtsp://admin:secure@123@201.202.202.52/cam/realmonitor?channel=1&subtype=0"
-  #   roi_1_pts_np: [[632, 241], [644, 241], [586, 718], [517, 716]]
-  #   #[[638, 234], [650, 239], [611, 712], [522, 714]]
-  #   roi_2_pts_np: [[654, 277], [644, 712], [1087, 717], [870, 253]]
-  #   roi_3_pts_np: [[617, 259], [509, 715], [3, 711], [458, 287]]
-  #   thresh_roi: 200
-  #   motion_buffer_duration: 5
-  #   motion_buffer_fps: 30
-  #   motion_direction_window: 2
-
-
-
-
-
-
-
-
-
+  camera_233:
+    RTSP_URL: "rtsp://admin:Control@12@201.202.202.233/cam/realmonitor?channel=1&subtype=0"
+    # roi_1_pts_np: [[730, 830], [866, 830], [822, 153], [803, 152]]
+    # roi_2_pts_np: [[786, 198], [713, 830], [100, 830], [538, 175]]
+    # roi_3_pts_np: [[834, 202], [883, 830], [1313, 830], [996, 204]]
+    roi_1_pts_np: [[758, 36], [776, 36], [828, 719], [678, 719]]
+    roi_2_pts_np: [[660, 719], [736, 79], [452, 74], [2, 719]]
+    roi_3_pts_np: [[791, 81], [843, 719], [1276, 719], [959, 85]]
+    thresh_roi: 500
+    motion_buffer_duration: 5
+    motion_buffer_fps: 20
+    motion_direction_window: 2
 
 
 
@@ -262,36 +217,44 @@ cameras:
 ###########################################################################
 # 187 id not taken becouse it is outside of main gate
 
-
+  # camera_40:
+  #   RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.40/cam/realmonitor?channel=1&subtype=0"
+  #   roi_1_pts_np: [[525, 76], [538, 76], [605, 716], [497, 713]]
+  #   roi_2_pts_np: [[508, 93], [459, 712], [4, 710], [238, 62]]
+  #   roi_3_pts_np: [[549, 87], [616, 714], [1273, 712], [732, 101]]
+  #   thresh_roi: 500
+  #   motion_buffer_duration: 5
+  #   motion_buffer_fps: 25
+  #   motion_direction_window: 2
 
   # camera_21:
-  #   RTSP_URL: "rtsp://admin:Control@12@201.202.202.21/cam/realmonitor?channel=1&subtype=0"
+  #   RTSP_URL: ""rtsp:"//ProjectTheft2024:Theft@2024@201.202.202.21/cam/realmonitor?channel=1&subtype=0"
   #   roi_1_pts_np: [[1287, 771], [1793, 465], [1766, 444], [1236, 736]]
   #   roi_2_pts_np: [[1384, 780], [1823, 471], [1896, 515], [1502, 796]]
   #   roi_3_pts_np: [[1181, 714], [1635, 463], [1580, 441], [1083, 668]]
-  #   thresh_roi: 200
+  #   thresh_roi: 500
   #   motion_buffer_duration: 5
   #   motion_buffer_fps: 30
   #   motion_direction_window: 2
 
 
   # camera_22:
-  #   RTSP_URL: "rtsp://admin:Control@12@201.202.202.22/cam/realmonitor?channel=1&subtype=0"
+  #   RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.22/cam/realmonitor?channel=1&subtype=0"
   #   roi_1_pts_np: [[5, 591], [1533, 587], [1539, 568], [2, 543]]
   #   roi_2_pts_np: [[10, 671], [1523, 608], [1542, 760], [24, 791]]
   #   roi_3_pts_np: [[5, 520], [1482, 553], [1473, 535], [14, 496]]
-  #   thresh_roi: 200
+  #   thresh_roi: 500
   #   motion_buffer_duration: 5
   #   motion_buffer_fps: 30
   #   motion_direction_window: 2
 
 
   # camera_44:
-  #   RTSP_URL: "rtsp://admin:secure@123@201.202.202.44/cam/realmonitor?channel=1&subtype=0"
+  #   RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.44/cam/realmonitor?channel=1&subtype=0"
   #   roi_1_pts_np: [[1477, 473], [1279, 791], [1392, 796], [1476, 637]]
   #   roi_2_pts_np: [[1472, 423], [1214, 796], [249, 744], [1316, 259]]
   #   roi_3_pts_np: [[1472, 659], [1409, 795], [1463, 796], [1477, 745]]
-  #   thresh_roi: 200
+  #   thresh_roi: 500
   #   motion_buffer_duration: 5
   #   motion_buffer_fps: 30
   #   motion_direction_window: 2.0
@@ -299,11 +262,11 @@ cameras:
 
 
   # camera_53:
-  #   RTSP_URL: "rtsp://admin:secure@123@201.202.202.53/cam/realmonitor?channel=1&subtype=0"
+  #   RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.53/cam/realmonitor?channel=1&subtype=0"
   #   roi_1_pts_np: [[744, 264], [1276, 306], [1277, 265], [736, 227]]
   #   roi_2_pts_np: [[395, 381], [1263, 413], [1275, 712], [304, 715]]
   #   roi_3_pts_np: [[771, 212], [845, 99], [1273, 137], [1273,250]] 
-  #   thresh_roi: 200
+  #   thresh_roi: 500
   #   motion_buffer_duration: 5
   #   motion_buffer_fps: 30
   #   motion_direction_window: 2
@@ -311,11 +274,11 @@ cameras:
 
 
   # camera_37:
-  #   RTSP_URL: "rtsp://admin:secure@123@201.202.202.37/cam/realmonitor?channel=1&subtype=0"
+  #   RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.37/cam/realmonitor?channel=1&subtype=0"
   #   roi_1_pts_np: [[817, 112], [869, 135], [698, 717], [442, 713]]
   #   roi_2_pts_np: [[863, 172], [724, 713], [1255, 713], [1067, 260]]
   #   roi_3_pts_np: [[692, 196], [380, 712], [4, 613], [391, 157]]
-  #   thresh_roi: 200
+  #   thresh_roi: 500
   #   motion_buffer_duration: 5
   #   motion_buffer_fps: 30
   #   motion_direction_window: 2
@@ -323,11 +286,11 @@ cameras:
 
 
   # camera_38:
-  #   RTSP_URL: "rtsp://admin:secure@123@201.202.202.38/cam/realmonitor?channel=1&subtype=0"
+  #   RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.38/cam/realmonitor?channel=1&subtype=0"
   #   roi_1_pts_np: [[609, 158], [1271, 227], [1272, 198], [604, 121]]
   #   roi_2_pts_np: [[605, 251], [1270, 267], [1273, 712], [577, 708]]
   #   roi_3_pts_np: [[625, 113], [1257, 173], [1222, 140], [612, 98]]
-  #   thresh_roi: 200
+  #   thresh_roi: 500
   #   motion_buffer_duration: 5
   #   motion_buffer_fps: 30
   #   motion_direction_window: 2
@@ -335,14 +298,24 @@ cameras:
 
 
   # camera_20:
-  #   RTSP_URL: "rtsp://admin:Control@12@201.202.202.20/cam/realmonitor?channel=1&subtype=0"
+  #   RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.20/cam/realmonitor?channel=1&subtype=0"
   #   roi_1_pts_np: [[441, 142], [470, 141], [768, 715], [630, 716]]
   #   roi_2_pts_np: [[415, 121], [562, 697], [7, 711], [70, 183]]
   #   roi_3_pts_np: [[1243, 13], [1240, 31], [1261, 40], [1265, 21]]
-  #   thresh_roi: 200
+  #   thresh_roi: 500
   #   motion_buffer_duration: 5
   #   motion_buffer_fps: 30
   #   motion_direction_window: 2
 
 
+# # password is not capture
+#   camera_19:
+#     RTSP_URL: "rtsp://ProjectTheft2024:Theft@2024@201.202.202.19/cam/realmonitor?channel=1&subtype=0"
+#     roi_1_pts_np: [[293, 338], [1272, 498], [1269, 415], [317, 320]]
+#     roi_2_pts_np: [[258, 347], [1272, 662], [458, 713], [85, 403]]
+#     roi_3_pts_np: [[671, 35], [685, 109], [1004, 86], [989, 17]]
+#     thresh_roi: 500
+#     motion_buffer_duration: 5
+#     motion_buffer_fps: 15
+#     motion_direction_window: 2
 

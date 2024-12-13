@@ -13,23 +13,26 @@ from datetime import datetime
 from collections import deque
 import sys
 import yaml
+import os
 import torch
 from threading import Thread, Lock
 import queue
 from ultralytics import YOLO
 from MetalTheft.mongodb import MongoDBHandler
-from MetalTheft.constant import *
+# from MetalTheft.constant import *
 from MetalTheft.exception import MetalTheptException
 from MetalTheft.send_email import EmailSender
 from MetalTheft.utils.utils import send_data_to_dashboard
 from MetalTheft.utils.utils import save_snapshot, save_video, draw_boxes, draw_motion_contours
 from MetalTheft.motion_detection import detect_motion, person_detection_ROI
-from MetalTheft.roi_selector import ROISelector
 from MetalTheft.aws import AWSConfig
 logging.getLogger('ultralytics').setLevel(logging.WARNING)
+from dotenv import load_dotenv
+load_dotenv()
+CC_EMAIL = os.getenv('CC_EMAIL')
 mongo_handler = MongoDBHandler()
 aws = AWSConfig()
-email = EmailSender()
+email = EmailSender(cc_email = CC_EMAIL)
 
 
 
@@ -103,7 +106,7 @@ class CameraProcessor:
             # Initialize processing attributes
             self.aws = AWSConfig()
             self.mongo_handler = MongoDBHandler()
-            self.email = EmailSender()
+            self.email = EmailSender(cc_email = CC_EMAIL)
             self.setup_complete = True
             self.alpha = 0.6
             self.counter = 1
@@ -166,7 +169,8 @@ class CameraProcessor:
         """Initialize all necessary components with error handling"""
         try:
             # Initialize YOLO model
-            self.model = YOLO('yolov8n.engine', task = 'detect', verbose=True)
+            # self.model = YOLO('yolov8n.engine', task = 'detect', verbose=True)
+            self.model = YOLO('yolov8n.pt',  verbose=True)
             
             # Initialize background subtractor
             self.fgbg = cv2.createBackgroundSubtractorMOG2(
@@ -295,8 +299,7 @@ class CameraProcessor:
                 thread.start()
 
                 self.counter += 1
-                                                    
-                                               
+                                                                          
         # Draw detection boxes
         cv2.putText(combined_frame, f'Object Count: {self.object_counter}', (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
         cv2.putText(combined_frame, f'Person Count: {person_counter}', (10, 70), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
@@ -308,7 +311,8 @@ class MultiCameraSystem:
     def __init__(self, config_path):
         self.camera_processors = {}
         try:
-            self.model = YOLO('yolov8n.engine', task = 'detect', verbose=True)
+            # self.model = YOLO('yolov8n.engine', task = 'detect', verbose=True)
+            self.model = YOLO('yolov8n.pt',  verbose=True)
         except Exception as e:
             logging.error(f"Failed to load YOLO model: {str(e)}")
             raise

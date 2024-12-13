@@ -8,22 +8,30 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.base import MIMEBase
 from email import encoders
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+SENDER_EMAIL = os.getenv('SENDER_EMAIL')
+RECEIVER_EMAIL = os.getenv('RECEIVER_EMAIL')
+SMTP_LOGIN_EMAIL_PASS = os.getenv('SMTP_LOGIN_EMAIL_PASS')
+CC_EMAIL = os.getenv('CC_EMAIL')
 
 
 
 class EmailSender:
     try:
-        def __init__(self, sender_email=SENDER_EMAIL, receiver_email=RECEIVER_EMAIL, smtp_login_email_pass=SMTP_LOGIN_EMAIL_PASS):
+        def __init__(self, sender_email=SENDER_EMAIL, receiver_email=RECEIVER_EMAIL, cc_email=None, smtp_login_email_pass=SMTP_LOGIN_EMAIL_PASS):
             self.sender_email = sender_email
             self.receiver_email = receiver_email
+            self.cc_email = cc_email
             self.smtp_login_email_pass = smtp_login_email_pass
 
         def send_alert_email(self, attachment_path=None, video_url=None, camera_id=None):
             try:
-                subject = "Regarding the Metal Object Theft"
-                # Update the message to include the video URL if provided
+                subject = "Regarding to the Metal Object Theft"
                 message = f"""Hi,
-We have observed an incident on This camera IP number: {camera_id}, here Someone is throwing a metal object over the wall.
+We have observed an incident on This {camera_id}, here Someone is throwing a metal object over the wall.
 
 Here is the video link for the incident: {video_url if video_url else "Video not available"}
 
@@ -33,6 +41,8 @@ AI Security"""
                 msg = MIMEMultipart()
                 msg['From'] = self.sender_email
                 msg['To'] = self.receiver_email
+                if self.cc_email:
+                    msg['Cc'] = self.cc_email
                 msg['Subject'] = subject
 
                 msg.attach(MIMEText(message, 'plain'))
@@ -50,16 +60,20 @@ AI Security"""
                 server = smtplib.SMTP('smtp.gmail.com', 587)
                 server.starttls()
                 server.login(self.sender_email, self.smtp_login_email_pass)
+                
+                # Prepare recipients list
+                recipients = [self.receiver_email]
+                if self.cc_email:
+                    recipients.append(self.cc_email)
+                
                 text = msg.as_string()
-                server.sendmail(self.sender_email, self.receiver_email, text)
+                server.sendmail(self.sender_email, recipients, text)
                 server.quit()
+                logging.info(f"Email has been sent to: {self.receiver_email}" + (f" with CC to: {self.cc_email}" if self.cc_email else ""))
 
-                logging.info(f"Alert  Email has been sent to {camera_id}")
-                return f"Email has been sent to: {self.receiver_email}"
-            
+                return f"Email has been sent to: {self.receiver_email}" + (f" with CC to: {self.cc_email}" if self.cc_email else "")
             except Exception as e:
-                raise MetalTheptException(e, sys) from e
-
+                return f"Error in send_email: {e}"
 
         def daily_report_email(self, attachment_path=None):
             try:

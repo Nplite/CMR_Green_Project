@@ -6,15 +6,23 @@
 
 cameras:
 
-
+  # camera_100:
+  #   RTSP_URL: 0
+  #   roi_1_pts_np: [[379, 47], [377, 473], [429, 473], [427, 44]]
+  #   roi_2_pts_np: [[341, 24], [342, 474], [35, 471], [30, 21]]
+  #   roi_3_pts_np: [[482, 35], [491, 470], [598, 472], [589, 31]]
+  #   thresh_roi: 100
+  #   motion_buffer_duration: 5
+  #   motion_buffer_fps: 30
+  #   motion_direction_window: 2  
 
   camera_217:
-    RTSP_URL: 'DATA/09.10.2024.mp4'
+    RTSP_URL: 'DATA/217.mp4'
     #"rtsp://admin:Control@12@201.202.202.217/cam/realmonitor?channel=1&subtype=0"
     roi_1_pts_np: [[885, 130], [917, 130], [891, 888], [800, 889]]
     roi_2_pts_np: [[854, 189], [627, 896], [6, 886], [415, 204]]
     roi_3_pts_np: [[932, 167], [932, 890], [1267, 889], [1270, 208]]
-    thresh_roi: 300
+    thresh_roi: 100
     motion_buffer_duration: 5
     motion_buffer_fps: 30
     motion_direction_window: 2
@@ -33,30 +41,6 @@ cameras:
   #   motion_direction_window: 2
 
 
-
-
-  camera_186:
-    RTSP_URL: "DATA/186.mp4" 
-    #"rtsp://admin:Control@12@201.202.202.186/cam/realmonitor?channel=1&subtype=0"
-    roi_1_pts_np: [[540, 199], [555, 192], [839, 715], [769, 710]]
-    roi_2_pts_np: [[733, 710], [527, 195], [424, 220], [227, 713]]
-    roi_3_pts_np: [[858, 716], [566, 193], [903, 128], [1275, 669]]
-    thresh_roi: 300
-    motion_buffer_duration: 5
-    motion_buffer_fps: 30
-    motion_direction_window: 2
-
-
-
-  # camera_188:
-  #   RTSP_URL: "rtsp://admin:Control@12@201.202.202.188/cam/realmonitor?channel=1&subtype=0"
-  #   roi_1_pts_np: [[1, 396], [863, 222], [863, 208], [1, 317]]
-  #   roi_2_pts_np: [[803, 260], [927, 329], [548, 716], [8, 551]]
-  #   roi_3_pts_np: [[1, 301], [782, 200], [624, 105], [3, 162]]
-  #   thresh_roi: 300
-  #   motion_buffer_duration: 5
-  #   motion_buffer_fps: 30
-  #   motion_direction_window: 2
 
 
 
